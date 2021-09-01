@@ -1,0 +1,12 @@
+class one {
+    real varone[1]
+    real func(integer param[1], integer param[1]) {
+        if (1 > 2) then {
+            return(1>0);
+        }  else {
+            return(1<0)
+        } 
+    }
+}
+
+exit
