@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 typedef struct{
 	char error[1000];
@@ -23,7 +24,7 @@ void printInfo(char *info) {
 
 void addErrorLog(char *error, char *lineno) {
     strcpy(errorLogs[errorLogNo].error, error);
-    strcpy(errorLogs[errorLogNo].lineno, lineno);-
+    strcpy(errorLogs[errorLogNo].lineno, lineno);
     errorLogNo++;
 }
 

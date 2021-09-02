@@ -594,16 +594,16 @@ int statement() {
     } else if (strcmp(currToken, "read") == 0) {
         printParserLog("Read detected, checking for (variable)");
         getNextToken();
-        if(strcmp(currToken, "(" == 0)) {
+        if(strcmp(currToken, "(") == 0) {
             printParserLog("Detected ( , checking for variable");
             getNextToken();
             if(variable() == 1) {
                 printParserLog("Detected variable , checking for )");
                 getNextToken();
-                if(strcmp(currToken, ")" == 0)) {
+                if(strcmp(currToken, ")") == 0) {
                     printParserLog("Detected ) , checking for ;");
                     getNextToken();
-                    if(strcmp(currToken, ";" == 0)) {
+                    if(strcmp(currToken, ";") == 0) {
                         printParserLog("Read definition succesfull");
                         return 1;
                     } else {
@@ -876,7 +876,6 @@ int classDecl() {
     printParserLog("Came inside class declaration...");  
 
     if (strcmp(currTokenType, "ID") == 0) {
-        
         strcpy(classSym.name, currToken);
         getNextToken();
         printParserLog("Detected ID..."); 

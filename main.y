@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include "main.h"
 #include "log.h"
+#include "main.h"
 #include "parser.h"
 
 /* prototypes */
