@@ -1,12 +1,46 @@
-class one {
-    real varone[1]
-    real func(integer param[1], integer param[1]) {
+class one {                                                             
+    real varone[1];
+    real vartwo;
+    real funcone() {
+        varone = vartwo;
+    };
+}
+class two {
+    real varthree;  
+}
+exit
+
+class one {                                                             
+    real varone[1];
+    real vartwo;
+    real funcone(integer param[1], integer param[1]) {
+        varone = vartwo;
         if (1 > 2) then {
             return(1>0);
         }  else {
-            return(1<0)
-        } 
-    }
+            return(1<0);
+        };
+
+        while (1 < 2) do {
+            write(1 > 0);
+            return(2 < 3);
+        };
+    };
+}
+
+class two {
+    real functwo(integer param[1], integer param[1]) {
+        if (1 > 2) then {
+            return(1>0);
+        }  else {
+            return(1<0);
+        };
+
+        while (1 < 2) do {
+            write(1 > 0);
+            return(2 < 3);
+        };
+    };
 }
 
 exit

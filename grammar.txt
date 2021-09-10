@@ -1,0 +1,145 @@
+%token OP CP OSB CSB DOT OB CB SC
+%token ASTK FS PCT
+%token PLUS MINUS
+%token LT GT LE GE
+%token EQ EQQ
+%token CMA
+
+%token LETTER DIGIT NONZERO ALPHANUM ID FRACTION NUM INTEGER
+%token WHILE IF THEN DO CLASS PROGRAM
+%nonassoc ELSE
+
+%token LG NE CMTSTART CMTEND CMT 
+%token PRINT READ REAL INT WRITE RETURN AND NOT OR
+
+%type <id> ID INTEGER REAL type
+%type <nPtr> classDecl varDecl
+
+%%
+
+
+classDecl:
+    classDecl CLASS ID OP varDecl funcDef CP 
+    | CLASS ID OP varDecl funcDef CP
+    | CLASS ID OP CP {$$ = cls($2);}
+    // | CLASS ID OP CP {updateClassSymbolTable($2); printf("value is %s", $2);} // this line is for testing, dummy grammar
+    ;
+progBody:
+    PROGRAM funcBody SC funcDef
+    ;
+funcHead: 
+    type ID OB fParams CB
+    ;
+funcDef:
+    funcDef funcHead funcBody |
+    funcHead funcBody
+    ;
+funcBody: 
+    OP varDecl statement CP |
+    ;
+varDecl: 
+    varDecl type ID arraySize SC |
+    type ID arraySize SC |
+    type ID SC {$$ = var($1, $2);} | //dummy grammar
+    ;
+statement: 
+    statement variable assignOp expr SC |
+    statement IF OB expr CB DO statBlock SC |
+    statement READ OB variable CB SC |
+    statement WRITE OB expr CB SC |
+    statement RETURN OB expr CB |
+    variable assignOp expr SC |
+    IF OB expr CB DO statBlock SC |
+    READ OB variable CB SC |
+    WRITE OB expr CB SC |
+    RETURN OB expr CB |
+    ;
+statBlock: 
+    OP statement CP |
+    variable assignOp expr SC |
+    IF OB expr CB DO statBlock SC |
+    READ OB variable CB SC |
+    WRITE OB expr CB SC |
+    RETURN OB expr CB SC
+    ;
+expr:
+    arithExpr addOp term |
+    term multOp factor |
+    idnest ID indice |
+    idnest ID OB aParams CB |
+    NUM |
+    OB expr CB |
+    NOT factor |
+    sign factor |
+    arithExpr relOp arithExpr |
+    ;
+arithExpr: 
+    arithExpr addOp term |
+    term multOp factor |
+    idnest ID indice |
+    idnest ID OB aParams CB |
+    NUM |
+    OB expr CB |
+    NOT factor |
+    sign factor |
+    ;
+sign:
+    PLUS | MINUS ;
+term:
+    term multOp factor |
+    idnest ID indice |
+    idnest ID OB aParams CB |
+    OB expr CB |
+    NOT factor |
+    sign factor
+    ;
+factor: 
+    idnest ID indice |
+    idnest ID OB aParams CB |
+    NUM |
+    OB expr CB |
+    NOT factor |
+    sign factor
+    ;
+variable: 
+    idnest ID indice
+    ;
+idnest:
+    idnest ID indice |
+    ID indice
+    ;
+indice: 
+    indice OSB arithExpr CSB |
+    OSB arithExpr CSB
+    ;
+arraySize: 
+    arraySize OSB INTEGER CSB |
+    OSB INTEGER CSB |
+    OSB DIGIT CSB |
+    OSB NONZERO CSB |
+    OSB FRACTION CSB |
+    OSB LETTER CSB
+    ;
+type: 
+    INTEGER {$$ = $1;}|
+    ID      {$$ = $1;}
+    ;
+fParams:
+    type ID arraySize fParamsTail |
+    ;
+aParams: 
+    expr aParamsTail |
+    ;
+fParamsTail:
+    fParamsTail CMA type arraySize |
+    CMA type arraySize |
+    ;
+aParamsTail:
+    aParamsTail CMA expr |
+    CMA expr
+    ;
+
+assignOp:   EQ;
+relOp:      EQQ | LG | LT | GT | LE | GE ;
+addOp:      PLUS | MINUS | OR ;
+multOp:     ASTK | FS | AND ;

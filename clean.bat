@@ -6,3 +6,4 @@ del *.o
 del y.tab.h
 del tokens.txt
 del log.txt
+del assembly.txt

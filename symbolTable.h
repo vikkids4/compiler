@@ -9,13 +9,13 @@ int variableId = 0;
 
 typedef struct{
 	char name[10];
-    int *memoryLocation;
+    char *memoryLocation;
 } classSym;
 
 typedef struct{
 	char name[10];
     char type[10];
-    int *memoryLocation;
+    char *memoryLocation;
 } functionSym;
 
 typedef struct{
@@ -23,7 +23,7 @@ typedef struct{
     char type[10];
     char size[10];
     char value[10];
-    int *memoryLocation;
+    char *memoryLocation;
 } variableSym;
 
 classSym classSymbolTable[50];
@@ -52,51 +52,65 @@ char *removeSpaces(char *str) {
 
 void printVariableSymbolTable() {
     int i=0;
-    printf("\n\n==============================================================\n\n");
+    printf("\n\n===============================================================================\n\n");
     printf("Variable Symbol Table");
-    printf("\n\n==============================================================\n\n");
-    printf("%-12s%-12s%-12s%-12s%-12s\n", "No.", "Name", "Type", "Size", "Value", "Memory Loc");
+    printf("\n\n===============================================================================\n\n");
+    printf("%-12s%-12s%-12s%-12s%-15s%-15s\n", "No.", "Name", "Type", "Size", "Value", "Memory Location");
 
 	for(i=0; i < variableId; i++) {
-        printf("%-12d%-12s%-12s%-12s%-12s\n", i, variableSymbolTable[i].name, variableSymbolTable[i].type, variableSymbolTable[i].size, "");
+        printf("%-12d%-12s%-12s%-12s%-15s%-15u\n", i, 
+                variableSymbolTable[i].name, 
+                variableSymbolTable[i].type, 
+                variableSymbolTable[i].size,
+                variableSymbolTable[i].value, 
+                variableSymbolTable[i].memoryLocation);
 	}
 
-    printf("\n\n==============================================================\n\n");
+    printf("\n\n===============================================================================\n\n");
 }
 
 void printClassSymbolTable() {
     int i=0;
-    printf("\n\n==============================================================\n\n");
+    printf("\n\n===============================================================================\n\n");
     printf("Class Symbol Table");
-    printf("\n\n==============================================================\n\n");
+    printf("\n\n===============================================================================\n\n");
     printf("%-12s%-12s%-12s\n", "No.", "Name", "Memory Loc");
 
 	for(i=0; i < classId; i++) {
         printf("%-12d%-12s%-12s\n", i, classSymbolTable[i].name, "");
 	}
 
-    printf("\n\n==============================================================\n\n");
+    printf("\n\n===============================================================================\n\n");
 }
 
 void printFunctionSymbolTable() {
     int i=0;
-    printf("\n\n==============================================================\n\n");
+    printf("\n\n===============================================================================\n\n");
     printf("Function Symbol Table");
-    printf("\n\n==============================================================\n\n");
+    printf("\n\n===============================================================================\n\n");
     printf("%-12s%-12s%-12s%-12s\n", "No.", "Name", "Type", "Memory Loc");
 
 	for(i=0; i < functionId; i++) {
         printf("%-12d%-12s%-12s%-12s\n", i, functionSymbolTable[i].name, functionSymbolTable[i].type, "");
 	}
 
-    printf("\n\n==============================================================\n\n");
+    printf("\n\n===============================================================================\n\n");
+}
+
+char *getVarLocation(char *v) {
+    int i=0;
+    for(i=0; i < variableId + 1; i++) {
+        if (strcmp(variableSymbolTable[i].name, v) == 0){
+            return variableSymbolTable[i].memoryLocation;
+        }
+        
+    }
 }
 
 int checkVariable(char *v, char *lineno) {
     int i=0;
     for(i=0; i < variableId + 1; i++) {
-        if (strcmp(variableSymbolTable[i].name, v) == 0)
-        {
+        if (strcmp(variableSymbolTable[i].name, v) == 0) {
             printParserLog("Duplicate variable definition detected...");
             addErrorLog("Duplicate variable definition", lineno);
             return 0;
@@ -131,15 +145,19 @@ int checkFunction(char *f, char *lineno) {
 }
 
 int updateVariableSymbolTable(variableSym v, char *lineno) {
-    if (checkVariable(removeSpaces(v.name), lineno) == 0)
-    {
+    if (checkVariable(removeSpaces(v.name), lineno) == 0) {
         return 0;
     }
-    
+    char *var_value = (char *) malloc(10);
+    if (var_value == NULL) {
+        printf("Memory overflow");
+    }
+    strcpy(var_value, removeSpaces(v.value));
     strcpy(variableSymbolTable[variableId].name, removeSpaces(v.name));
     strcpy(variableSymbolTable[variableId].type, removeSpaces(v.type));
     strcpy(variableSymbolTable[variableId].size, removeSpaces(v.size));
     strcpy(variableSymbolTable[variableId].value, removeSpaces(v.value));
+    variableSymbolTable[variableId].memoryLocation = var_value;
     variableId++;
 }
 
@@ -164,6 +182,6 @@ int updateFunctionSymbolTable(functionSym f, char *lineno) {
 
 void printAllSymbolTables() {
     printVariableSymbolTable();
-    printClassSymbolTable();
-    printFunctionSymbolTable();
+    // printClassSymbolTable();
+    // printFunctionSymbolTable();
 }

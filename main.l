@@ -63,48 +63,14 @@ INTEGER     {NONZERO}{DIGIT}*
 
 "exit"      {writeTokenOutput("RESERVED", yytext, yylineno); return 0;}
 
-{LETTER}    {
-                char *c = yytext;
-				char *str;
-				if ((str = malloc(10)) == NULL)
-					yyerror("out of memory");
-				strncpy (str, c, 10);
-                yylval.mLocation = str;
-                writeTokenOutput("LETTER", yytext, yylineno);
-                return LETTER;
-            }
-
+{LETTER}    {writeTokenOutput("LETTER", yytext, yylineno); return LETTER;}
 {DIGIT}     {writeTokenOutput("DIGIT", yytext, yylineno); return DIGIT;}
 {NONZERO}   {writeTokenOutput("NONZERO", yytext, yylineno); return NONZERO; }
 {ALPHANUM}  {writeTokenOutput("ALPHANUM", yytext, yylineno); return ALPHANUM;}
-{ID}        {
-                char *c = yytext;
-				char *str;
-				if ((str = malloc(10)) == NULL)
-					yyerror("out of memory");
-				strncpy (str, c, 10);
-                yylval.mLocation = str;
-
-                writeTokenOutput("ID", str, yylineno);
-
-                return ID;
-            } // ID character limit is 10
+{ID}        {writeTokenOutput("ID", yytext, yylineno); return ID;}
 {FRACTION}  {writeTokenOutput("FRACTION", yytext, yylineno); return FRACTION;}
 {NUM}       {writeTokenOutput("NUM", yytext, yylineno); return NUM;}
-{INTEGER}   {
-                char *c = yytext;
-				char *str;
-				if ((str = malloc(10)) == NULL)
-					yyerror("out of memory");
-				strncpy (str, c, 10);
-                // printf("String = %s,  Address = %u\n", str, str);
-                yylval.symName = str;
-                yylval.mLocation = str;
-
-                writeTokenOutput("INTEGER", str, yylineno);
-
-                return INTEGER; 
-            }
+{INTEGER}   {writeTokenOutput("INTEGER", yytext, yylineno); return INTEGER;}
 
 [ \n]+    ;       /* ignore whitespace */ 
 [ \t\n]+    ;       /* ignore whitespace */ 

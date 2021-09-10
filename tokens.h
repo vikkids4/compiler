@@ -15,6 +15,6 @@ void writeTokenOutput(char *type, char *token, int lineno) {
 		exit(1);
 	}
 	fprintf(fptr, "%s:%s:%d\n", type, token, lineno);
-	printToken(type, token, lineno);
+	// printToken(type, token, lineno);
 	fclose(fptr);
 }
