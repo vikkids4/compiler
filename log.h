@@ -2,31 +2,46 @@
 #include <string.h>
 
 typedef struct{
+	char log[1000];
+} parserLog;
+
+typedef struct{
 	char error[1000];
     char lineno[1000];
 } errorLog;
 
 int phaseCount = 0;
+int parserLogNo = 0;
 int errorLogNo = 0;
+parserLog parserLogs[500];
 errorLog errorLogs[500];
 
 FILE *logFilePtr;
-int parserLogLine = 0;
 
 // Printing parser logs
-void printParserLog(char *log) {
-    if(parserLogLine > 500) {
+void addParserLog(char *log) {
+    if(parserLogNo > 500) {
         exit(0);
     }
-   printf("[%d] %s\n", ++parserLogLine, log);
+    strcpy(parserLogs[parserLogNo].log, log);
+    parserLogNo++;
+}
 
-    logFilePtr = fopen("log.txt", "a");
-    if (logFilePtr == NULL) {
-        printf("[ERROR] Token Output File Not Found!");
-        exit(1);
-    }
-	fprintf(logFilePtr, "[%d] %s\n", parserLogLine, log);
-	fclose(logFilePtr);
+// Printing error logs
+void printParseLogs() {
+    int i;
+    for(i=0; i < parserLogNo; i++) {
+        // print on console
+        printf("[%d] %s\n", i, parserLogs[i].log);
+        // print on file
+        logFilePtr = fopen("log.txt", "a");
+        if (logFilePtr == NULL) {
+            printf("[ERROR] Token Output File Not Found!");
+            exit(1);
+        }
+        fprintf(logFilePtr, "[%d] %s\n", i, parserLogs[i].log);
+        fclose(logFilePtr);
+	}
 }
 
 // Printing the compiler phases

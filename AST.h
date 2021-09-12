@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdbool.h> 
+#include <stdbool.h>
 
 typedef struct _StatementNode StatementNode;
 typedef struct _VariableNode VariableNode;
+int loopCount = 0;
+FILE *assemblyFilePtr;
 
 typedef struct{
     bool init;
@@ -167,9 +169,50 @@ typedef struct{
 
 void parseVarAssignStmt(VarAssignStmtNode *varAssignStmtNode) {
     if (varAssignStmtNode->init = true) {
-        printf("\tMOV EAX, [%d]\n", getVarLocation(varAssignStmtNode->variable.id));
-        printf("\tMOV EBX, [%d]\n", getVarLocation(varAssignStmtNode->expr.arithExpr.term.factor.variable->id));
-        printf("\tMOV EAX, EBX\n");
+        fprintf(assemblyFilePtr, "\t;VAR ASSIGNMENT STMT NODE\n");
+        fprintf(assemblyFilePtr, "\tMOV EAX, [%s]\n", varAssignStmtNode->expr.arithExpr.term.factor.variable->id);
+        fprintf(assemblyFilePtr, "\tMOV EAX, [%d]\n", getVarLocation(varAssignStmtNode->variable.id));
+        fprintf(assemblyFilePtr, "\tMOV EBX, [%d]\n", getVarLocation(varAssignStmtNode->expr.arithExpr.term.factor.variable->id));
+        fprintf(assemblyFilePtr, "\tMOV EAX, EBX\n\n");
+    }
+}
+
+void parseIfElseStmt(IfElseStmtNode *ifElseStmtNode) {
+    if (ifElseStmtNode->init = true) {
+        fprintf(assemblyFilePtr, "\t;IF ELSE STMT NODE\n");
+        fprintf(assemblyFilePtr, "\tMOV EAX, [%s]\n", ifElseStmtNode->expr.RelArithExprNode.arithExpr1.term.factor.variable->id);
+        fprintf(assemblyFilePtr, "\tMOV EAX, [%d]\n", getVarLocation(ifElseStmtNode->expr.RelArithExprNode.arithExpr1.term.factor.variable->id));
+        fprintf(assemblyFilePtr, "\tMOV EBX, [%d]\n", getVarLocation(ifElseStmtNode->expr.RelArithExprNode.arithExpr2.term.factor.variable->id));
+        fprintf(assemblyFilePtr, "\tCMP EAX, EBX\n");
+        fprintf(assemblyFilePtr, "\tJE L%d\n", ++loopCount);
+
+        // statblock for if
+        for (int i = 1; i < ifElseStmtNode->statBlock1.statementNodeCount + 1; i++) {
+            if (ifElseStmtNode->statBlock1.statement[i]->varAssignStmt.init == true) {
+                ifElseStmtNode->statBlock1.statement[i]->varAssignStmt.init = false;
+            } else if (ifElseStmtNode->statBlock1.statement[i]->ifElseStmtNode.init == true) {
+                ifElseStmtNode->statBlock1.statement[i]->ifElseStmtNode.init = false;
+            } else if (ifElseStmtNode->statBlock1.statement[i]->whileStmtNode.init == true) {
+                ifElseStmtNode->statBlock1.statement[i]->whileStmtNode.init = false;
+            } else if (ifElseStmtNode->statBlock1.statement[i]->readStmtNode.init == true) {
+                ifElseStmtNode->statBlock1.statement[i]->readStmtNode.init = false;
+            } else if (ifElseStmtNode->statBlock1.statement[i]->writeStmtNode.init == true) {
+                // ifElseStmtNode->statBlock1.statement[i]->statementType++;
+                ifElseStmtNode->statBlock1.statement[i]->writeStmtNode.init = false;
+            } else if (ifElseStmtNode->statBlock1.statement[i]->returnStmtNode.init == true) {
+                ifElseStmtNode->statBlock1.statement[i]->writeStmtNode.init = false;
+                fprintf(assemblyFilePtr, "\tMOV EAX, [%d]\n", getVarLocation(ifElseStmtNode->statBlock1.statement[i]->returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id));
+                fprintf(assemblyFilePtr, "\tMOV EBX, [%d]\n", getVarLocation(ifElseStmtNode->statBlock1.statement[i]->returnStmtNode.expr.RelArithExprNode.arithExpr2.term.factor.variable->id));
+                fprintf(assemblyFilePtr, "\tCMP EAX, EBX\n");
+
+                // statblock else
+                fprintf(assemblyFilePtr, "\nL%d:\n", loopCount++);
+                fprintf(assemblyFilePtr, "\tMOV EAX, [%d]\n", getVarLocation(ifElseStmtNode->statBlock2.statement[i]->returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id));
+                fprintf(assemblyFilePtr, "\tMOV EBX, [%d]\n", getVarLocation(ifElseStmtNode->statBlock2.statement[i]->returnStmtNode.expr.RelArithExprNode.arithExpr2.term.factor.variable->id));
+                fprintf(assemblyFilePtr, "\tCMP EAX, EBX\n");
+                fprintf(assemblyFilePtr, "\tRET\n");
+            }
+        }
     }
 }
 
@@ -179,14 +222,14 @@ void parseFuncDef(FuncDefNode *funcDefNode) {
     if (funcBodyNode.statementCount > 0){
         if (funcBodyNode.init == true) {
             for (int i = 1; i < funcBodyNode.statementCount + 1; i++) {
-                switch (funcBodyNode.statement[i]->statementType) {
-                    case 0:
-                        // variable assignment
-                        parseVarAssignStmt(&funcBodyNode.statement[i]->varAssignStmt);
-                        break;
-                    
-                    default:
-                        break;
+                if (funcBodyNode.statement[i]->varAssignStmt.init == true) {
+                    parseVarAssignStmt(&funcBodyNode.statement[i]->varAssignStmt);
+                    funcBodyNode.statement[i]->varAssignStmt.init = false;
+                    // funcBodyNode.statement[i]->statementType++;
+                }else if (funcBodyNode.statement[i]->ifElseStmtNode.init == true) {
+                    parseIfElseStmt(&funcBodyNode.statement[i]->ifElseStmtNode);
+                    // funcBodyNode.statement[i]->statementType++;
+                    funcBodyNode.statement[i]->ifElseStmtNode.init = false;
                 }
             }
         }
@@ -197,38 +240,43 @@ void parseVarDecl(VarDeclNode *varDeclNode) {
     // nothing for now
 }
 
+FILE *getAssemblyFile() {
+    assemblyFilePtr = fopen("assembly.txt", "a");
+    if (assemblyFilePtr == NULL) {
+        fprintf(assemblyFilePtr, "[ERROR] Assembly File Not Found!");
+        exit(1);
+    }
+}
 
 void parseAST(ProgNode *progNode) {
-    printf("global _start\n\n");
-    printf("_start:\n");
+    getAssemblyFile();
+    fprintf(assemblyFilePtr, "global _start\n\n");
+    fprintf(assemblyFilePtr, "_start:\n");
     if (progNode->classDeclCount > 0) {
         // class declarations
         for (int i = 1; i < progNode->classDeclCount + 1; i++) {
             if (progNode->classDecl[i].init == true)
             {
-                printf("\tCALL %s\n", progNode->classDecl[i].id);
+                fprintf(assemblyFilePtr, "\tCALL %s\n", progNode->classDecl[i].id);
             }
         }
+        fprintf(assemblyFilePtr, "\n");
         for (int i = 1; i < progNode->classDeclCount + 1; i++) {
             if (progNode->classDecl[i].init == true) {
-                printf("%s:\n", progNode->classDecl[i].id);
                 // variable declaraions
                 if (progNode->classDecl[i].varDeclCount > 0) {
                     parseVarDecl(progNode->classDecl[i].varDecl);
                 }
                 // function definitions
                 if (progNode->classDecl[i].funcDefCount > 0) {
-                    for (int i = 0; i < progNode->classDecl[i].funcDefCount + 1; i++)
-                    {
-                        parseFuncDef(&progNode->classDecl[i].funcDef[i]);
+                    for (int j = 0; j < progNode->classDecl[i].funcDefCount + 1; j++) {
+                        parseFuncDef(&progNode->classDecl[i].funcDef[j]);
                     }
                 }    
             }
         }
     }
-    printf("\n\n");
-    printf("a-%s\n", progNode->classDecl[1].funcDef[1].funcBody.statement[1]->varAssignStmt.variable.id);
-    printf("b-%s", progNode->classDecl[1].funcDef[1].funcBody.statement[1]->varAssignStmt.expr.arithExpr.term.factor.variable->id);
+    fprintf(assemblyFilePtr, "\n\n");
 }
 
 
@@ -258,12 +306,12 @@ void parseAST(ProgNode *progNode) {
 //     {
 //         for (int i = 0; i < progNode.classDeclCount; i++)
 //         {
-//             printf("CLASS %d : %s\n", i, progNode.classDecl[i].id);
+//             fprintf(assemblyFilePtr, "CLASS %d : %s\n", i, progNode.classDecl[i].id);
 //             for (int j = 0; j < progNode.classDecl[i].varDeclCount; j++)
 //             {
-//                 printf("VAR INIT: %d\n", progNode.classDecl[i].varDecl->init);
+//                 fprintf(assemblyFilePtr, "VAR INIT: %d\n", progNode.classDecl[i].varDecl->init);
 //                 if(progNode.classDecl[i].varDecl->init == true) {
-//                     printf("VARIABLE - %d IS %d : %s\n", i, j, progNode.classDecl[i].varDecl[j].id);
+//                     fprintf(assemblyFilePtr, "VARIABLE - %d IS %d : %s\n", i, j, progNode.classDecl[i].varDecl[j].id);
 //                 }
 //             }
             
@@ -286,7 +334,7 @@ void parseAST(ProgNode *progNode) {
 
 // void next(nodeTwo *nt) {
 //     strcpy(nt->one.a, "after");
-//     // printf("NODE ONE NEW: %s\n", nt.one.a);
+//     // fprintf(assemblyFilePtr, "NODE ONE NEW: %s\n", nt.one.a);
 // }
 
 void test() {
@@ -295,9 +343,9 @@ void test() {
     // strcpy(none.a, "before");
     // nodeTwo ntwo;
     // ntwo.one = none;
-    // printf("NONE BEFORE: %s\n", ntwo.one.a);
+    // fprintf(assemblyFilePtr, "NONE BEFORE: %s\n", ntwo.one.a);
     // next(&ntwo);
-    // printf("NONE AFTER: %s\n", ntwo.one.a);
+    // fprintf(assemblyFilePtr, "NONE AFTER: %s\n", ntwo.one.a);
 
     // ClassDeclNode cdn;
     // ProgBodyNode pbn;
@@ -322,5 +370,5 @@ void test() {
     // FactorNode fn;
     // VarDeclNode vdcln;
     // ArraySizeNode aszn;
-    // printf("DONE");
+    // fprintf(assemblyFilePtr, "DONE");
 }

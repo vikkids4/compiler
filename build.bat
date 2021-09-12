@@ -7,5 +7,6 @@ gcc lex.yy.o y.tab.o -o main.exe
 echo. 2>tokens.txt
 echo. 2>log.txt
 echo. 2>assembly.txt
+echo. 2>symbolTables.txt
 echo.
 echo Done

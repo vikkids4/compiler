@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <memory.h>
 #include "symbolTable.h"
-#include "codeGen.h"
 #include "AST.h"
 
 FILE *tokensFilePtr;
@@ -12,9 +11,40 @@ char* token;
 char* currToken;
 char* currTokenType;
 char* currLineNo;
-int scope = 0;
-OneOperand oneOperand;
-TwoOperand twoOperand;
+
+ArithExprNode arithExprNodes[100];
+RelArithExprNode relArithExprNodes[100];
+TermNode termNodes[100];
+FactorNode factorNodes[100];
+VariableNode variableNodes[100];
+StatBlockNode statBlockNodes[100];
+StatementNode statementNodes[100];
+ExprNode exprNodes[100];
+ReturnStmtNode returnStatementNodes[100];
+ClassDeclNode classDeclNodes[100];
+VarDeclNode varDeclNodes[100];
+FuncDefNode funcDefNodes[100];
+FuncHeadNode funcHeadNodes[100];
+FuncBodyNode funcBodyNodes[100];
+IfElseStmtNode ifElseStmtNodes[100];
+VarAssignStmtNode varAssignStmtNodes[100];
+
+int arithExprNodesCount = 0;
+int relArithExprNodesCount = 0;
+int termNodesCount = 0;
+int factorNodesCount = 0;
+int variableNodesCount = 0;
+int statBlockNodesCount = 0;
+int statementNodesCount = 0;
+int exprNodesCount = 0;
+int returnStatementNodesCount = 0;
+int classDeclNodesCount = 0;
+int varDeclNodesCount = 0;
+int funcDefNodesCount = 0;
+int funcHeadNodesCount = 0;
+int funcBodyNodesCount = 0;
+int ifElseStmtNodesCount = 0;
+int varAssignStmtNodesCount = 0;
 
 void initTokenFile() {
     tokensFilePtr = fopen("tokens.txt", "r");
@@ -62,10 +92,10 @@ int type() {
     if (strcmp(currToken, "integer") == 0 || 
         strcmp(currToken, "real") == 0    || 
         strcmp(currToken, "id") == 0) {
-        printParserLog("Valid type detected...");
+        addParserLog("Valid type detected...");
         return 1;
     } else {
-        printParserLog("Invalid type detected");
+        addParserLog("Invalid type detected");
         return 0;
     }
 }
@@ -91,7 +121,7 @@ int varDecl(variableSym variable, VarDeclNode *varDeclNode) {
                 //         strcmp(currTokenType, "DIGIT") == 0) {
                 //         strcpy(variable.value, currToken);
                 //     } else {
-                //         printParserLog("Invalid variable declaration: check variable assignment");
+                //         addParserLog("Invalid variable declaration: check variable assignment");
                 //         addErrorLog("Invalid variable declaration: check variable assignment", currLineNo);
                 //         return 0;
                 //     }
@@ -99,10 +129,10 @@ int varDecl(variableSym variable, VarDeclNode *varDeclNode) {
                 // }
                 if (strcmp(currToken, ";") == 0) {
                     // insert into variable symbol table
-                    printParserLog("Variable declaration successful!");
+                    addParserLog("Variable declaration successful!");
                     strcpy(variable.value, "null");
                     if(updateVariableSymbolTable(variable, currLineNo) == 0) {
-                        printParserLog("Update variable symbol table failed...");
+                        addParserLog("Update variable symbol table failed...");
                         return 0;
                     }
                     return 1;
@@ -117,11 +147,11 @@ int varDecl(variableSym variable, VarDeclNode *varDeclNode) {
         }
     } else if (strcmp(currToken, ";") == 0) {
         // insert into variable symbol table
-        printParserLog("Variable declaration successful!");
+        addParserLog("Variable declaration successful!");
         strcpy(variable.size, "10");
         strcpy(variable.value, "null");
         if(updateVariableSymbolTable(variable, currLineNo) == 0) {
-            printParserLog("Update variable symbol table failed...");
+            addParserLog("Update variable symbol table failed...");
             return 0;
         }
         return 1;
@@ -178,79 +208,78 @@ int assignOp() {
 }
 
 int indice() {
-    printParserLog("Checking for an indice");
+    addParserLog("Checking for an indice");
     if(strcmp(currToken, "[") == 0) {
         getNextToken();
-        printParserLog("Checking for an arithmatic expression");
+        addParserLog("Checking for an arithmatic expression");
         ArithExprNode arithExprNode0;
         arithExprNode0.init = false;
         if (arithExpr(&arithExprNode0) == 1) {
             arithExprNode0.init = false;
-            printParserLog("Arithmatic expression detected");
+            addParserLog("Arithmatic expression detected");
             getNextToken();
             if (strcmp(currToken, "]") == 0) {
-                printParserLog("Indice declared succesfully");
+                addParserLog("Indice declared succesfully");
                 return 1;
             } else {
-                printParserLog("Invalid indice definition, expected a ] after arithmatic expression");
+                addParserLog("Invalid indice definition, expected a ] after arithmatic expression");
                 addErrorLog("Invalid indice definition, expected a ] after arithmatic expression", currLineNo);
                 return 0;
             }   
         } else {
-            printParserLog("Invalid indice definition, expected an arithmatic expression after [");
+            addParserLog("Invalid indice definition, expected an arithmatic expression after [");
             addErrorLog("Invalid indice definition, expected an arithmatic expression after [", currLineNo);
             return 0;
         }
     } else {
-        printParserLog("Invalid indice definition, should start with [");
+        addParserLog("Invalid indice definition, should start with [");
         return 0;
     }
 }
 
 int idnest() {
-    printParserLog("Checking for an idnest");
+    addParserLog("Checking for an idnest");
     if(strcmp(currTokenType, "ID") == 0) {
-        printParserLog("Valid ID detected inside idnest, checking for indice");
+        addParserLog("Valid ID detected inside idnest, checking for indice");
         getNextToken();
         if(indice() == 1) {
-            printParserLog("Valid indice detected, checking for more indice definition if available");
+            addParserLog("Valid indice detected, checking for more indice definition if available");
             getNextToken();
             while (indice() == 1) {
-                printParserLog("Looping indices inside idnest");
+                addParserLog("Looping indices inside idnest");
                 getNextToken();
             }
             if(strcmp(currToken, ".") == 0) {
-                printParserLog("Valid idnest definition found");
+                addParserLog("Valid idnest definition found");
                 return 1;
             }
         }
     } else {
-        printParserLog("Invalid idnest definition, should start with an ID");
+        addParserLog("Invalid idnest definition, should start with an ID");
         return 0;
     }
 }
 
 int variable(VariableNode *variableNode) {
-    printParserLog("Checking for a variable");
+    addParserLog("Checking for a variable");
     // at this point ID and next token would have been fetched
     if(strcmp(currTokenType, "ID") == 0) {
         strcpy(variableNode->id,currToken);
         // adding this inside because Idnest also needs ID first so saving some logic space
         // if(idnest() == 1) {
-        //     printParserLog("Valid idnest detected, checking for more idnest definition if available");
+        //     addParserLog("Valid idnest detected, checking for more idnest definition if available");
         //     while(idnest() == 1) {
-        //         printParserLog("More idnest definition found");
+        //         addParserLog("More idnest definition found");
         //         getNextToken();
         //     }
         // } 
 
-        strcpy(twoOperand.opcode, "MOV");
-        // printParserLog("Valid ID detected inside variable, checking for indice");
+        // addParserLog("Valid ID detected inside variable, checking for indice");
         // if(indice() == 1) {
-        //     printParserLog("Valid indice detected, checking for more indice definition if available");
+        //     addParserLog("Valid indice detected, checking for more indice definition if available");
         //     getNextToken();
         //     while (indice() == 1) {
-        //         printParserLog("Looping indices inside idnest");
+        //         addParserLog("Looping indices inside idnest");
         //         getNextToken();
         //     }
         //     // no need to getNextToken() after this method
@@ -258,63 +287,64 @@ int variable(VariableNode *variableNode) {
         // }
         return 1;
     } else {
-        printParserLog("No variable definitions found");
+        addParserLog("No variable definitions found");
         return 0;
     }
 }
 
 int sign() {
-    printParserLog("Checking for sign");
+    addParserLog("Checking for sign");
     if (strcmp(currToken, "+") == 0 ||
         strcmp(currToken, "-") == 0) {
         return 1;
     } else {
-        printParserLog("Sign check failed");
+        addParserLog("Sign check failed");
         return 0;
     }
 }
 
 int factor(FactorNode *factorNode) {
-    VariableNode variableNode;
-    variableNode.init = false;
-    memset(variableNode.idnestNode, 0, sizeof(variableNode.idnestNode));
-    memset(variableNode.indiceNode, 0, sizeof(variableNode.indiceNode));
-    variableNode.idnestCount = 0;
-    variableNode.indiceCount = 0;
+    // VariableNode variableNode = variableNodes[++variableNodesCount];
+    // strcpy(variableNodes[variableNodesCount].id, "ABC");
+    variableNodes[++variableNodesCount].init = false;
+    memset(variableNodes[variableNodesCount].idnestNode, 0, sizeof(variableNodes[variableNodesCount].idnestNode));
+    memset(variableNodes[variableNodesCount].indiceNode, 0, sizeof(variableNodes[variableNodesCount].indiceNode));
+    variableNodes[variableNodesCount].idnestCount = 0;
+    variableNodes[variableNodesCount].indiceCount = 0;
 
     IdnestNode idnestNode;
     idnestNode.init = false;
     memset(idnestNode.indiceNode, 0, sizeof(idnestNode.indiceNode));
     idnestNode.indiceCount = 0;
-    if (variable(&variableNode) == 1) {
-        factorNode->variable = &variableNode;
+    if (variable(&variableNodes[variableNodesCount]) == 1) {
+        factorNode->variable = &variableNodes[variableNodesCount];
         // no need to getNextToken() afer this
-        printParserLog("Valid variable definition found, factor defintion success");
+        addParserLog("Valid variable definition found, factor defintion success");
         return 1;
     } else if (idnest(&idnestNode) == 1) {
-        printParserLog("Valid idnest detected, checking for more idnest definition if available");
+        addParserLog("Valid idnest detected, checking for more idnest definition if available");
         while(idnest() == 1) {
-            printParserLog("More idnest definition found");
+            addParserLog("More idnest definition found");
             getNextToken();
         }
         if(strcmp(currTokenType, "ID") == 0) {
-            printParserLog("A valid ID detected, checking (aParamas)");
+            addParserLog("A valid ID detected, checking (aParamas)");
             getNextToken();
             if(strcmp(currToken, "(") == 0) {
-                printParserLog("Checking for aParams");
+                addParserLog("Checking for aParams");
                 getNextToken();
                 while (strcmp(currToken, ")") == 0){
                     if(aParams() == 1) {
-                        printParserLog("aParams detected, checking for more");
+                        addParserLog("aParams detected, checking for more");
                         getNextToken();
                         while(aParams() == 1) {
-                            printParserLog("More aParams detected");
+                            addParserLog("More aParams detected");
                             getNextToken();
                         }
                     }
 
                     if(strcmp(currToken, ")") == 0) {
-                        printParserLog("Valid factor definition found");
+                        addParserLog("Valid factor definition found");
                         return 1;
                     } else {
                         getNextToken();
@@ -322,34 +352,34 @@ int factor(FactorNode *factorNode) {
                 }
                 
             } else {
-                printParserLog("Invalid Factor definition, an ID should be followed by (aParams)");
+                addParserLog("Invalid Factor definition, an ID should be followed by (aParams)");
                 addErrorLog("Invalid Factor definition, an ID should be followed by (aParams)", currLineNo);
                 return 0;
             }
 
         } else {
-            printParserLog("Invalid Factor definition, an idnest should be followed by an ID");
+            addParserLog("Invalid Factor definition, an idnest should be followed by an ID");
             addErrorLog("Invalid Factor definition, an idnest should be followed by an ID", currLineNo);
             return 0;
         }
     } else if(strcmp(currTokenType, "ID") == 0) {
-        printParserLog("A valid ID detected, checking (aParamas)");
+        addParserLog("A valid ID detected, checking (aParamas)");
         getNextToken();
         if(strcmp(currToken, "(") == 0) {
-            printParserLog("Checking for aParams");
+            addParserLog("Checking for aParams");
             getNextToken();
             while (strcmp(currToken, ")") == 0){
                 if(aParams() == 1) {
-                    printParserLog("aParams detected, checking for more");
+                    addParserLog("aParams detected, checking for more");
                     getNextToken();
                     while(aParams() == 1) {
-                        printParserLog("More aParams detected");
+                        addParserLog("More aParams detected");
                         getNextToken();
                     }
                 }
 
                 if(strcmp(currToken, ")") == 0) {
-                    printParserLog("Valid factor definition found");
+                    addParserLog("Valid factor definition found");
                     return 1;
                 } else {
                     getNextToken();
@@ -357,56 +387,56 @@ int factor(FactorNode *factorNode) {
             }
             
         } else {
-            printParserLog("Invalid Factor definition, an ID should be followed by (aParams)");
+            addParserLog("Invalid Factor definition, an ID should be followed by (aParams)");
             addErrorLog("Invalid Factor definition, an ID should be followed by (aParams)", currLineNo);
             return 0;
         }
 
     } else if(strcmp(currTokenType, "NUM") == 0) {
-        printParserLog("A valid ID detected, factor definition success");
+        addParserLog("A valid ID detected, factor definition success");
         return 1;
     } else if(strcmp(currToken, "(") == 0) {
-        printParserLog("Checking for (expression)");
+        addParserLog("Checking for (expression)");
         getNextToken();
         ExprNode exprNode;
         exprNode.init = false;
         if (expr(&exprNode) == 1) {
             exprNode.init = true;
-            printParserLog("Expression detected");
+            addParserLog("Expression detected");
             if(strcmp(currToken, ")") == 0) {
-                printParserLog("A valid (expression) detected, factor definition success");
+                addParserLog("A valid (expression) detected, factor definition success");
             } else {
-                printParserLog("Invalid Factor definition, an expression should be ecnlosed within ()");
+                addParserLog("Invalid Factor definition, an expression should be ecnlosed within ()");
                 addErrorLog("Invalid Factor definition, an expression should be ecnlosed within ()", currLineNo);
                 return 0;
             }
         }
         
     } else if (strcmp(currTokenType, "NOT") == 0) {
-        printParserLog("Detected NOT, checking for factor");
+        addParserLog("Detected NOT, checking for factor");
         getNextToken();
         FactorNode factorNode;
         factorNode.init = true;
         if (factor(&factorNode) == 1) {
             factorNode.init = false;
-            printParserLog("A valid factor definition found");
+            addParserLog("A valid factor definition found");
             return 1;
         } else {
-            printParserLog("Invalid Factor definition, a NOT should be followed by a factor");
+            addParserLog("Invalid Factor definition, a NOT should be followed by a factor");
             addErrorLog("Invalid Factor definition, a NOT should be followed by a factor", currLineNo);
             return 0;
         }
     } else if (sign() == 1) {
-        printParserLog("Detected sign, checking for factor");
+        addParserLog("Detected sign, checking for factor");
         getNextToken();
         FactorNode factorNode;
         factorNode.init = true;
         if (factor(&factorNode) == 1) {
             factorNode.init = false;
-            printParserLog("A valid factor definition found");
+            addParserLog("A valid factor definition found");
             return 1;
         } else {
-            printParserLog("Invalid Factor definition, a sign should be followed by a factor");
+            addParserLog("Invalid Factor definition, a sign should be followed by a factor");
             addErrorLog("Invalid Factor definition, a sign should be followed by a factor", currLineNo);
             return 0;
         }
@@ -416,22 +446,22 @@ int factor(FactorNode *factorNode) {
 }
 
 int term(TermNode *termNode) {
-    FactorNode factorNode;
-    factorNode.init = false;
-    if(factor(&factorNode) == 1) {
-        factorNode.init = true;
-        termNode->factor = factorNode;
-        printParserLog("Detected factor, checking for mult operator");
+    // FactorNode factorNode = factorNodes[++factorNodesCount];
+    factorNodes[++factorNodesCount].init = false;
+    if(factor(&factorNodes[factorNodesCount]) == 1) {
+        factorNodes[factorNodesCount].init = true;
+        termNode->factor = factorNodes[factorNodesCount];
+        addParserLog("Detected factor, checking for mult operator");
         getNextToken();
         if(multOp() == 1) {
-            printParserLog("Multiplication operation detected");
+            addParserLog("Multiplication operation detected");
             getNextToken();
-            printParserLog("Checking for a factor");
-            if(factor(&factorNode) == 1) {
-                printParserLog("Factor detected");
+            addParserLog("Checking for a factor");
+            if(factor(&factorNodes[++factorNodesCount]) == 1) {
+                addParserLog("Factor detected");
                 return 1;
             } else {
-                printParserLog("A multiplication operator should be followed by a factor for a term");
+                addParserLog("A multiplication operator should be followed by a factor for a term");
                 addErrorLog("Invalid term declaration, a multiplication operator should be followed by a factor for a term", currLineNo);
                 return 0;
             }
@@ -439,72 +469,74 @@ int term(TermNode *termNode) {
             return 1;
         }
     } else {
-        printParserLog("Invalid term declaration");
+        addParserLog("Invalid term declaration");
         addErrorLog("Invalid term declaration found, expected a term or a factor", currLineNo);
         return 0;
     }
 }
 
 int arithExpr(ArithExprNode *arithExprNode) {
-    printParserLog("Checking arithmatic expression");
-    TermNode termNode;
-    termNode.init = false;
-    if(term(&termNode) == 1) {
-        termNode.init = false;
-        arithExprNode->term = termNode;
-        printParserLog("Detected term");
+    addParserLog("Checking arithmatic expression");
+    // TermNode termNode = termNodes[++termNodesCount];
+    termNodes[++termNodesCount].init = false;
+    if(term(&termNodes[termNodesCount]) == 1) {
+        termNodes[termNodesCount].init = true;
+        arithExprNode->term = termNodes[termNodesCount];
+        addParserLog("Detected term");
         return 1;
     } else if(addOp() == 1) {
-        printParserLog("Add operation detected inside arithmatic expression");
+        addParserLog("Add operation detected inside arithmatic expression");
         getNextToken();
-        if(term(&termNode) == 1) {
-            termNode.init = true;
-            printParserLog("Detected term after add operation");
+        if(term(&termNodes[++termNodesCount]) == 1) {
+            termNodes[termNodesCount].init = true;
+            addParserLog("Detected term after add operation");
             return 1;
         } else {
-            printParserLog("Invalid arithmatic expression detected, expected a term after add operation");
+            addParserLog("Invalid arithmatic expression detected, expected a term after add operation");
             addErrorLog("Invalid arithmatic expression detected, expected a term after add operation", currLineNo);
             return 0;
         }
     } else {
-        printParserLog("No arithmatic definitions found");
+        addParserLog("No arithmatic definitions found");
         return 0;
     }
 }
 
 int expr(ExprNode *exprNode) {
-    printParserLog("Checking for expression defintion");
-    ArithExprNode arithExprNode;
-    arithExprNode.init = false;
-    if (arithExpr(&arithExprNode) == 1) {
+    addParserLog("Checking for expression defintion");
+    // ArithExprNode arithExprNode1 = arithExprNodes[++arithExprNodesCount];
+    arithExprNodes[++arithExprNodesCount].init = false;
+    if (arithExpr(&arithExprNodes[arithExprNodesCount]) == 1) {
         // arithExprNode.init = true;
-        exprNode->arithExpr = arithExprNode;
-        RelArithExprNode relArithExprNode;
-        relArithExprNode.init = false;
-        printParserLog("Arithmatic definition detected, checking for relational operator");
+        exprNode->arithExpr = arithExprNodes[arithExprNodesCount];
+        // RelArithExprNode relArithExprNode;
+        relArithExprNodes[++relArithExprNodesCount].init = false;
         if (relOp() == 1) {
-            strcpy(relArithExprNode.relOp, currToken);
-            printParserLog("Relational operator detected, checking for arithmatic definition");
+            relArithExprNodes[relArithExprNodesCount].arithExpr1 = arithExprNodes[arithExprNodesCount];
+            strcpy(relArithExprNodes[relArithExprNodesCount].relOp, currToken);
+            addParserLog("Relational operator detected, checking for arithmatic definition");
             getNextToken();
-            arithExprNode.init = false;
-            if(arithExpr(&arithExprNode) == 1) {
-                arithExprNode.init = true;
-                relArithExprNode.arithExpr2 = arithExprNode;
-                relArithExprNode.init = true;
-                printParserLog("Expression defined successfully");
+            // ArithExprNode arithExprNode2 = arithExprNodes[++arithExprNodesCount];
+            arithExprNodes[++arithExprNodesCount].init = false;
+            if(arithExpr(&arithExprNodes[arithExprNodesCount]) == 1) {
+                arithExprNodes[arithExprNodesCount].init = true;
+                relArithExprNodes[relArithExprNodesCount].arithExpr2 = arithExprNodes[arithExprNodesCount];
+                relArithExprNodes[relArithExprNodesCount].init = true;
+                exprNode->RelArithExprNode = relArithExprNodes[relArithExprNodesCount];
+                addParserLog("Expression defined successfully");
                 return 1;
             } else {
-                printParserLog("Invalid expression definition, a relational operator should be followed by an arithmatic operator");
+                addParserLog("Invalid expression definition, a relational operator should be followed by an arithmatic operator");
                 addErrorLog("Invalid expression definition, a relational operator should be followed by an arithmatic operator", currLineNo);
                 return 0;
             }
         } else {
             // no need to call getNextToken() after this method
-            printParserLog("Expression defintion successful");
+            addParserLog("Expression defintion successful");
             return 1;
         }
     } else {
-        printParserLog("Invalid expression definition, should start with an arithmatic expression");
+        addParserLog("Invalid expression definition, should start with an arithmatic expression");
         addErrorLog("Invalid expression definition, should start with an arithmatic expression", currLineNo);
         return 0;
     }
@@ -513,175 +545,189 @@ int expr(ExprNode *exprNode) {
 }
 
 int statBlock(StatBlockNode *statBlockNode) {
-    printParserLog("Checking for statBlock defintion");
-    StatementNode statementNode;
-    statementNode.init = false;
+    addParserLog("Checking for statBlock defintion");
+    // StatementNode statementNode;
+    statementNodes[++statementNodesCount].init = false;
     if(strcmp(currToken, "{") == 0) {
-        printParserLog("Detected { , checking for statement");
+        addParserLog("Detected { , checking for statement");
         getNextToken();
-        if(statement(&statementNode) == 1) {
-            statementNode.init = true;
-            StatementNode *statementNodePtr4 = stmtNodeToPtr(statementNode);
-            statBlockNode->statement[++statBlockNode->statementNodeCount] = statementNodePtr4;
-            printParserLog("Detected statement , checking for more statements");
+        if(statement(&statementNodes[statementNodesCount]) == 1) {
+            statementNodes[statementNodesCount].init = true;
+            // StatementNode *statementNodePtr4 = stmtNodeToPtr(statementNode);
+            statBlockNode->statement[++statBlockNode->statementNodeCount] = &statementNodes[statementNodesCount];
+            // printf("---\n");
+            // printf("TEST %s %d\n", statementNodes[statementNodesCount].returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id, statBlockNode->statementNodeCount);
+            // printf("xxx\n");
+            addParserLog("Detected statement , checking for more statements");
             getNextToken();
-            while (statement(&statementNode) == 1){
-                StatementNode *statementNodePtr4 = stmtNodeToPtr(statementNode);
-                statBlockNode->statement[++statBlockNode->statementNodeCount] = statementNodePtr4;
-                printParserLog("Detected more statements");
+            while (statement(&statementNodes[++statementNodesCount]) == 1){
+                // StatementNode *statementNodePtr4 = stmtNodeToPtr(statementNode);
+                statBlockNode->statement[++statBlockNode->statementNodeCount] = &statementNodes[statementNodesCount];
+                // printf("XXX%s\n", statBlockNode->statement[statBlockNode->statementNodeCount]->varAssignStmt.variable.id);
+                addParserLog("Detected more statements");
                 getNextToken();
+                    // printf("%s\n", statementNode->varAssignStmt.expr.arithExpr.term.factor.variable->id);
             }
         } else {
-            printParserLog("No statements found inside statBlock");
+            addParserLog("No statements found inside statBlock");
         }
         if(strcmp(currToken, "}") == 0) {
-            printParserLog("statBlock detected succesfully");
+            addParserLog("statBlock detected succesfully");
             return 1;
         } else {
-            printParserLog("Invalid statBlock definition, expected a } at the end");
+            addParserLog("Invalid statBlock definition, expected a } at the end");
             addErrorLog("Invalid statBlock definition, expected a } at the end", currLineNo);
             return 0;
         }
-    } else if(statement(&statementNode) == 1){
-        StatementNode *statementNodePtr4 = stmtNodeToPtr(statementNode);
-        statBlockNode->statement[++statBlockNode->statementNodeCount] = statementNodePtr4;
-        printParserLog("statBlock detected succesfully");
+    } else if(statement(&statementNodes[statementNodesCount]) == 1){
+        // StatementNode *statementNodePtr4 = stmtNodeToPtr(statementNode);
+        statBlockNode->statement[statementNodesCount] = &statementNodes[statementNodesCount];
+        addParserLog("statBlock detected succesfully");
         return 1;
     } else {
-        printParserLog("Empty statBlock detected without {}");
+        addParserLog("Empty statBlock detected without {}");
         return 1;
     }
 }
 
 int statement(StatementNode *statementNode) {
-    printParserLog("Checking for statement defintion");
-    VariableNode variableNode0;
-    variableNode0.init = false;
-    memset(variableNode0.idnestNode, 0, sizeof(variableNode0.idnestNode));
-    memset(variableNode0.indiceNode, 0, sizeof(variableNode0.indiceNode));
-    variableNode0.idnestCount = 0;
-    variableNode0.indiceCount = 0;
-    if(variable(&variableNode0) == 1) {
-        statementNode->statementType = 0;
-        variableNode0.init = true;
-        VarAssignStmtNode varAssignStmtNode;
-        varAssignStmtNode.init = false;
-        varAssignStmtNode.variable = variableNode0;
+    addParserLog("Checking for statement defintion");
 
-        printParserLog("Variable detected inside statement, checking for assignment operator");
+    // VariableNode variableNode0;
+    variableNodes[++variableNodesCount].init = false;
+    // memset(variableNode0.idnestNode, 0, sizeof(variableNode0.idnestNode));
+    // memset(variableNode0.indiceNode, 0, sizeof(variableNode0.indiceNode));
+    // variableNode0.idnestCount = 0;
+    // variableNode0.indiceCount = 0;
+
+    if(variable(&variableNodes[variableNodesCount]) == 1) {
+        statementNode->statementType = 0;
+        variableNodes[variableNodesCount].init = true;
+        // VarAssignStmtNode varAssignStmtNode;
+        varAssignStmtNodes[++varAssignStmtNodesCount].init = false;
+        varAssignStmtNodes[varAssignStmtNodesCount].variable = variableNodes[variableNodesCount];
+
+        addParserLog("Variable detected inside statement, checking for assignment operator");
         getNextToken();
         if(assignOp() == 1) {
-            printParserLog("Assign operator detected, checking for expression");
-            strcpy(twoOperand.opcode, "MOV"); // the operand1 will be degines inside variable()
+            addParserLog("Assign operator detected, checking for expression");
             getNextToken();
-            ExprNode exprNode;
-            exprNode.init = false;
-            if(expr(&exprNode) == 1) {
-                exprNode.init = true;
-                varAssignStmtNode.expr = exprNode;
-                varAssignStmtNode.init = true;
-                printParserLog("Expression detected, checking for ;");
+            // ExprNode exprNode;
+            exprNodes[++exprNodesCount].init = false;
+            if(expr(&exprNodes[exprNodesCount]) == 1) {
+                exprNodes[exprNodesCount].init = true;
+                varAssignStmtNodes[varAssignStmtNodesCount].expr = exprNodes[exprNodesCount];
+                addParserLog("Expression detected, checking for ;");
                 // getNextToken();
                 // getNextToken();
                 if(strcmp(currToken, ";") == 0) {
-                    statementNode->varAssignStmt = varAssignStmtNode;
+                    varAssignStmtNodes[varAssignStmtNodesCount].init = true;
+                    statementNode->varAssignStmt = varAssignStmtNodes[varAssignStmtNodesCount];
                     statementNode->init = true;
-                    printParserLog("Statement definition succesfull");
+                    addParserLog("Statement definition succesfull");
                     return 1;
                 } else {
-                    printParserLog("Invalid statement definition, a ; expected after expression");
+                    addParserLog("Invalid statement definition, a ; expected after expression");
                     addErrorLog("Invalid statement definition, a ; expected after expression", currLineNo);
                     return 0;
                 }
             } else {
-                printParserLog("Invalid statement definition, a valid expression detected after assignment operator");
+                addParserLog("Invalid statement definition, a valid expression detected after assignment operator");
                 addErrorLog("Invalid statement definition, a valid expression detected after assignment operator", currLineNo);
                 return 0;
             }
         }
     } else if (strcmp(currToken, "if") == 0) {
         statementNode->statementType = 1;
-        printParserLog("If condition detected, checking for (expression)");
+        addParserLog("If condition detected, checking for (expression)");
         getNextToken();
-        IfElseStmtNode ifElseStmtNode;
-        ifElseStmtNode.init = false;
+        
+        // IfElseStmtNode ifElseStmtNode;
+        ifElseStmtNodes[++ifElseStmtNodesCount].init = false;
         if(strcmp(currToken, "(") == 0) {
-            printParserLog("Detected ( , checking for expression");
+            addParserLog("Detected ( , checking for expression");
             getNextToken();
-            ExprNode exprNode;
-            exprNode.init = false;
-            if(expr(&exprNode) == 1) {
-                exprNode.init = true;
-                ifElseStmtNode.expr = exprNode;
-                printParserLog("Detected expression , checking for )");
+            // ExprNode exprNode;
+            exprNodes[++exprNodesCount].init = false;
+            if(expr(&exprNodes[exprNodesCount]) == 1) {
+                exprNodes[exprNodesCount].init = true;
+                ifElseStmtNodes[ifElseStmtNodesCount].expr = exprNodes[exprNodesCount];
+                addParserLog("Detected expression , checking for )");
                 if(strcmp(currToken, ")") == 0) {
-                    printParserLog("Detected ) , checking for then");
+                    addParserLog("Detected ) , checking for then");
                     getNextToken();
                     if(strcmp(currToken, "then") == 0) {
-                        printParserLog("Detected then , checking for statBlock");
+                        addParserLog("Detected then , checking for statBlock");
                         getNextToken();
-                        StatBlockNode statBlockNode;
-                        statBlockNode.init = false;
-                        memset(statBlockNode.statement, 0, sizeof(statBlockNode.statement));
-                        statBlockNode.statementNodeCount = 0;
-                        if(statBlock(&statBlockNode) == 1) {
-                            statBlockNode.init = true;
-                            ifElseStmtNode.statBlock1 = statBlockNode;
-                            printParserLog("Detected statBlock , checking for else");
+                        // StatBlockNode statBlockNode;
+                        statBlockNodes[++statBlockNodesCount].init = false;
+                        memset(statBlockNodes[statBlockNodesCount].statement, 0, sizeof(statBlockNodes[statBlockNodesCount].statement));
+                        statBlockNodes[statBlockNodesCount].statementNodeCount = 0;
+                        if(statBlock(&statBlockNodes[statBlockNodesCount]) == 1) {
+                            statBlockNodes[statBlockNodesCount].init = true;
+                            ifElseStmtNodes[ifElseStmtNodesCount].statBlock1 = statBlockNodes[statBlockNodesCount];
+                            addParserLog("Detected statBlock , checking for else");
                             getNextToken();
                             if(strcmp(currToken, "else") == 0) {
-                                printParserLog("Detected else , checking for statBlock");
+                                addParserLog("Detected else , checking for statBlock");
                                 getNextToken();
-                                statBlockNode.init = false;
-                                if(statBlock(&statBlockNode) == 1) {
-                                    statBlockNode.init = true;
-                                    ifElseStmtNode.statBlock2 = statBlockNode;
-                                    ifElseStmtNode.init = true;
-                                    printParserLog("Detected statBlock , checking for ;");
+                                statBlockNodes[++statBlockNodesCount].init = false;
+                                if(statBlock(&statBlockNodes[statBlockNodesCount]) == 1) {
+                                    statBlockNodes[statBlockNodesCount].init = true;
+                                    ifElseStmtNodes[ifElseStmtNodesCount].statBlock2 = statBlockNodes[statBlockNodesCount];
+                                    // printf("+++++++ %s\n",ifElseStmtNode.statBlock2.statement[statBlockNodes[statBlockNodesCount].statementNodeCount]->returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id);
+                                    // printf("+++++++ %s\n",ifElseStmtNode.statBlock1.statement[statBlockNodes[statBlockNodesCount].statementNodeCount]->returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id);
+                                    // printf("STAT COUNT: %d\n", statBlockNodes[statementNodesCount].statementNodeCount);
+                                    // printf("STAT 2 %s\n", statBlockNodes[statementNodesCount].statement[statBlockNodes->statementNodeCount]->returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id);
+                                    addParserLog("Detected statBlock , checking for ;");
                                     getNextToken();
                                     if(strcmp(currToken, ";") == 0) {
-                                        statementNode->ifElseStmtNode = ifElseStmtNode;
+                                        ifElseStmtNodes[ifElseStmtNodesCount].init = true;
+                                        statementNode->ifElseStmtNode = ifElseStmtNodes[ifElseStmtNodesCount];
                                         statementNode->init = true;
-                                        printParserLog("If condition definition succesfull");
-                                        getNextToken();
+                                        // printf("DOG %d -- %d\n", ifElseStmtNodes[ifElseStmtNodesCount].init, funcBodyNodesCount);
+                                        
+                                    // printf("+++ %s\n",statementNode->ifElseStmtNode.statBlock2.statement[statBlockNodes[statBlockNodesCount].statementNodeCount]->returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id);
+                                    // printf("--- %s\n",statementNode->ifElseStmtNode.statBlock1.statement[statBlockNodes[statBlockNodesCount].statementNodeCount]->returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id);
+                                        addParserLog("If condition definition succesfull");
                                         return 1;
                                     } else {
-                                        printParserLog("Invalid if condition definition, a ; expected at the end");
+                                        addParserLog("Invalid if condition definition, a ; expected at the end");
                                         addErrorLog("Invalid if condition definition, a ; expected at the end", currLineNo);
                                         return 0;
                                     }
                                 } else {
-                                    printParserLog("Invalid if condition definition, a else should be followed by an statBlock");
+                                    addParserLog("Invalid if condition definition, a else should be followed by an statBlock");
                                     addErrorLog("Invalid if condition definition, a else should be followed by an statBlock", currLineNo);
                                     return 0;
                                 }
                             } else {
-                                printParserLog("Invalid if condition definition, a statBlock should be followed by an else");
+                                addParserLog("Invalid if condition definition, a statBlock should be followed by an else");
                                 addErrorLog("Invalid if condition definition, a statBlock should be followed by an else", currLineNo);
                                 return 0;
                             }
                         } else {
-                            printParserLog("Invalid if condition definition, a statBlock expected after then");
+                            addParserLog("Invalid if condition definition, a statBlock expected after then");
                             addErrorLog("Invalid if condition definition, a statBlock expected after then", currLineNo);
                             return 0;
                         }
                     } else {
-                        printParserLog("Invalid if condition definition, an expression should be followed by then");
+                        addParserLog("Invalid if condition definition, an expression should be followed by then");
                         addErrorLog("Invalid if condition definition, an expression should be followed by then", currLineNo);
                         return 0;
                     }
                 } else {
-                    printParserLog("Invalid if condition definition, an expression should be followed by a )");
+                    addParserLog("Invalid if condition definition, an expression should be followed by a )");
                     addErrorLog("Invalid if condition definition, an expression should be followed by a )", currLineNo);
                     return 0;
                 }
             } else {
-                printParserLog("Invalid if condition definition, a ( should be followed by a valid expression");
+                addParserLog("Invalid if condition definition, a ( should be followed by a valid expression");
                 addErrorLog("Invalid if condition definition, a ( should be followed by a valid expression", currLineNo);
                 return 0;
             }
         } else {
-            printParserLog("Invalid if condition definition, if should be followed with (expression)");
+            addParserLog("Invalid if condition definition, if should be followed with (expression)");
             addErrorLog("Invalid if condition definition, if should be followed with (expression)", currLineNo);
             return 0;
         }
@@ -689,23 +735,23 @@ int statement(StatementNode *statementNode) {
         statementNode->statementType = 2;
         WhileStmtNode whileStmtNode;
         whileStmtNode.init = false;
-        printParserLog("While condition detected, checking for (expression)");
+        addParserLog("While condition detected, checking for (expression)");
         getNextToken();
         if(strcmp(currToken, "(") == 0) {
-            printParserLog("Detected ( , checking for expression");
+            addParserLog("Detected ( , checking for expression");
             getNextToken();
             ExprNode exprNode;
             exprNode.init = false;
             if(expr(&exprNode) == 1) {
                 exprNode.init = true;
                 whileStmtNode.expr = exprNode;
-                printParserLog("Detected expression , checking for )");
+                addParserLog("Detected expression , checking for )");
                 // getNextToken();
                 if(strcmp(currToken, ")") == 0) {
-                    printParserLog("Detected ) , checking for do");
+                    addParserLog("Detected ) , checking for do");
                     getNextToken();
                     if(strcmp(currToken, "do") == 0) {
-                        printParserLog("Detected else , checking for statBlock");
+                        addParserLog("Detected else , checking for statBlock");
                         getNextToken();
                         StatBlockNode statBlockNode;
                         statBlockNode.init = false;
@@ -715,40 +761,40 @@ int statement(StatementNode *statementNode) {
                             statBlockNode.init = true;
                             whileStmtNode.statBlock = statBlockNode;
                             whileStmtNode.init = true;
-                            printParserLog("Detected statBlock , checking for ;");
+                            addParserLog("Detected statBlock , checking for ;");
                             getNextToken();
                             if(strcmp(currToken, ";") == 0) {
                                 statementNode->whileStmtNode = whileStmtNode;
                                 statementNode->init = true;
-                                printParserLog("while condition definition succesfull");
+                                addParserLog("while condition definition succesfull");
                                 return 1;
                             } else {
-                                printParserLog("Invalid while condition definition, a ; expected at the end");
+                                addParserLog("Invalid while condition definition, a ; expected at the end");
                                 addErrorLog("Invalid while condition definition, a ; expected at the end", currLineNo);
                                 return 0;
                             }
                         } else {
-                            printParserLog("Invalid while condition definition, a do should be followed by an statBlock");
+                            addParserLog("Invalid while condition definition, a do should be followed by an statBlock");
                             addErrorLog("Invalid while condition definition, a do should be followed by an statBlock", currLineNo);
                             return 0;
                         }
                     } else {
-                        printParserLog("Invalid while condition definition, a statBlock should be followed by a do");
+                        addParserLog("Invalid while condition definition, a statBlock should be followed by a do");
                         addErrorLog("Invalid while condition definition, a statBlock should be followed by a do", currLineNo);
                         return 0;
                     }
                 } else {
-                    printParserLog("Invalid while condition definition, an expression should be followed by a )");
+                    addParserLog("Invalid while condition definition, an expression should be followed by a )");
                     addErrorLog("Invalid while condition definition, an expression should be followed by a )", currLineNo);
                     return 0;
                 }
             } else {
-                printParserLog("Invalid while condition definition, a ( should be followed by a valid expression");
+                addParserLog("Invalid while condition definition, a ( should be followed by a valid expression");
                 addErrorLog("Invalid while condition definition, a ( should be followed by a valid expression", currLineNo);
                 return 0;
             }
         } else {
-            printParserLog("Invalid while condition definition, while should be followed with (expression)");
+            addParserLog("Invalid while condition definition, while should be followed with (expression)");
             addErrorLog("Invalid while condition definition, while should be followed with (expression)", currLineNo);
             return 0;
         }
@@ -756,10 +802,10 @@ int statement(StatementNode *statementNode) {
         statementNode->statementType = 3;
         ReadStmtNode readStmtNode;
         readStmtNode.init = true;
-        printParserLog("Read detected, checking for (variable)");
+        addParserLog("Read detected, checking for (variable)");
         getNextToken();
         if(strcmp(currToken, "(") == 0) {
-            printParserLog("Detected ( , checking for variable");
+            addParserLog("Detected ( , checking for variable");
             getNextToken();
             VariableNode variableNode1;
             variableNode1.init = false;
@@ -771,33 +817,33 @@ int statement(StatementNode *statementNode) {
                 variableNode1.init = true;
                 readStmtNode.variable = variableNode1;
                 readStmtNode.init = true;
-                printParserLog("Detected variable , checking for )");
+                addParserLog("Detected variable , checking for )");
                 getNextToken();
                 if(strcmp(currToken, ")") == 0) {
-                    printParserLog("Detected ) , checking for ;");
+                    addParserLog("Detected ) , checking for ;");
                     getNextToken();
                     if(strcmp(currToken, ";") == 0) {
                         statementNode->readStmtNode = readStmtNode;
                         statementNode->init = true;
-                        printParserLog("Read definition succesfull");
+                        addParserLog("Read definition succesfull");
                         return 1;
                     } else {
-                        printParserLog("Invalid read definition, a ; expected at the end");
+                        addParserLog("Invalid read definition, a ; expected at the end");
                         addErrorLog("Invalid read definition, a ; expected at the end", currLineNo);
                         return 0;
                     }
                 } else {
-                    printParserLog("Invalid read definition, a variable should be followed by a )");
+                    addParserLog("Invalid read definition, a variable should be followed by a )");
                     addErrorLog("Invalid read definition, a variable should be followed by a )", currLineNo);
                     return 0;
                 }
             } else {
-                printParserLog("Invalid read definition, ( should be followed by a variable");
+                addParserLog("Invalid read definition, ( should be followed by a variable");
                 addErrorLog("Invalid read definition, ( should be followed by a variable", currLineNo);
                 return 0;
             }
         } else {
-            printParserLog("Invalid read definition, read should be followed with (variable)");
+            addParserLog("Invalid read definition, read should be followed with (variable)");
             addErrorLog("Invalid read definition, read should be followed with (variable)", currLineNo);
             return 0;
         }
@@ -805,10 +851,10 @@ int statement(StatementNode *statementNode) {
         statementNode->statementType = 4;
         WriteStmtNode writeStmtNode;
         writeStmtNode.init = false;
-        printParserLog("Write detected, checking for (expr)");
+        addParserLog("Write detected, checking for (expr)");
         getNextToken();
         if(strcmp(currToken, "(") == 0) {
-            printParserLog("Detected ( , checking for expression");
+            addParserLog("Detected ( , checking for expression");
             getNextToken();
             ExprNode exprNode;
             exprNode.init = false;
@@ -816,108 +862,109 @@ int statement(StatementNode *statementNode) {
                 exprNode.init = true;
                 writeStmtNode.expr = exprNode;
                 writeStmtNode.init = true;
-                printParserLog("Detected expression , checking for )");
+                addParserLog("Detected expression , checking for )");
                 // getNextToken();
                 if(strcmp(currToken, ")") == 0) {
-                    printParserLog("Detected ) , checking for ;");
+                    addParserLog("Detected ) , checking for ;");
                     getNextToken();
                     if(strcmp(currToken, ";") == 0) {
                         statementNode->writeStmtNode = writeStmtNode;
                         statementNode->init = true;
-                        printParserLog("Write definition succesfull");
+                        addParserLog("Write definition succesfull");
                         return 1;
                     } else {
-                        printParserLog("Invalid write definition, a ; expected at the end");
+                        addParserLog("Invalid write definition, a ; expected at the end");
                         addErrorLog("Invalid write definition, a ; expected at the end", currLineNo);
                         return 0;
                     }
                 } else {
-                    printParserLog("Invalid write definition, a expression should be followed by a )");
+                    addParserLog("Invalid write definition, a expression should be followed by a )");
                     addErrorLog("Invalid write definition, a expression should be followed by a )", currLineNo);
                     return 0;
                 }
             } else {
-                printParserLog("Invalid write definition, ( should be followed by a expression");
+                addParserLog("Invalid write definition, ( should be followed by a expression");
                 addErrorLog("Invalid write definition, ( should be followed by a expression", currLineNo);
                 return 0;
             }
         } else {
-            printParserLog("Invalid write definition, write should be followed with (expression)");
+            addParserLog("Invalid write definition, write should be followed with (expression)");
             addErrorLog("Invalid write definition, write should be followed with (expression)", currLineNo);
             return 0;
         }
     } else if (strcmp(currToken, "return") == 0) {
         statementNode->statementType = 5;
-        ReturnStmtNode returnStmtNode;
-        returnStmtNode.init = false;
-        printParserLog("Return detected, checking for (expr)");
+        // ReturnStmtNode returnStmtNode;
+        returnStatementNodes[++returnStatementNodesCount].init = false;
+        addParserLog("Return detected, checking for (expr)");
         getNextToken();
         if(strcmp(currToken, "(") == 0) {
-            printParserLog("Detected ( , checking for expression");
+            addParserLog("Detected ( , checking for expression");
             getNextToken();
-            ExprNode exprNode;
-            exprNode.init = false;
-            if(expr(&exprNode) == 1) {
-                exprNode.init = true;
-                returnStmtNode.expr = exprNode;
-                returnStmtNode.init = true;
-                printParserLog("Detected expression , checking for )");
+            // ExprNode exprNode;
+            exprNodes[++exprNodesCount].init = false;
+            if(expr(&exprNodes[exprNodesCount]) == 1) {
+                exprNodes[exprNodesCount].init = true;
+                returnStatementNodes[returnStatementNodesCount].expr = exprNodes[exprNodesCount];
+                returnStatementNodes[returnStatementNodesCount].init = true;
+                addParserLog("Detected expression , checking for )");
                 // getNextToken();
                 if(strcmp(currToken, ")") == 0) {
-                    printParserLog("Detected ) , checking for ;");
+                    addParserLog("Detected ) , checking for ;");
                     getNextToken();
                     if(strcmp(currToken, ";") == 0) {
-                        statementNode->returnStmtNode = returnStmtNode;
+                        statementNode->returnStmtNode = returnStatementNodes[returnStatementNodesCount];
                         statementNode->init = true;
-                        printParserLog("Return definition succesfull");
+                        // printf("RET %s\n", returnStatementNodes[1].expr.arithExpr.term.factor.variable->id);
+                        addParserLog("Return definition succesfull");
                         return 1;
                     } else {
-                        printParserLog("Invalid return definition, a ; expected at the end");
+                        addParserLog("Invalid return definition, a ; expected at the end");
                         addErrorLog("Invalid return definition, a ; expected at the end", currLineNo);
                         return 0;
                     }
                 } else {
-                    printParserLog("Invalid return definition, a expression should be followed by a )");
+                    addParserLog("Invalid return definition, a expression should be followed by a )");
                     addErrorLog("Invalid return definition, a expression should be followed by a )", currLineNo);
                     return 0;
                 }
             } else {
-                printParserLog("Invalid return definition, ( should be followed by a expression");
+                addParserLog("Invalid return definition, ( should be followed by a expression");
                 addErrorLog("Invalid return definition, ( should be followed by a expression", currLineNo);
                 return 0;
             }
         } else {
-            printParserLog("Invalid statement definition, expected variable/if/while/read/write/return");
+            addParserLog("Invalid statement definition, expected variable/if/while/read/write/return");
             addErrorLog("Invalid statement definition, expected variable/if/while/read/write/return", currLineNo);
             return 0;
         }
     } else {
-        printParserLog("No statements found");
+        addParserLog("No statements found");
         return 0;
     }
 }
 
 int arraySize() {
     if (strcmp(currToken, "[") == 0) {
-        printParserLog("A [ detected, checking for Digit");
+        addParserLog("A [ detected, checking for Digit");
         getNextToken();
         if (strcmp(currTokenType, "DIGIT") == 0) {
-            printParserLog("A Digit detected, checking for ]");
+            addParserLog("A Digit detected, checking for ]");
             getNextToken();
             if (strcmp(currToken, "]") == 0) {
-                printParserLog("Array definition success");
+                addParserLog("Array definition success");
                 return 1;
             } else {
-                printParserLog("Invalid array size defintion, ] expected after array size");
+                addParserLog("Invalid array size defintion, ] expected after array size");
                 addErrorLog("Invalid array size defintion, ] expected after array size", currLineNo);
                 return 0;
             }                        
         } else {
-            printParserLog("Invalid array size defintion, expected a digit or int inside []");
+            addParserLog("Invalid array size defintion, expected a digit or int inside []");
             return 0;
         }
     } else {
-        printParserLog("Invalid array size defintion, expected a [digit/int]");
+        addParserLog("Invalid array size defintion, expected a [digit/int]");
         return 0;
     }
 }
@@ -927,33 +974,33 @@ int aParams() {
     exprNode.init = false;
     if(expr(&exprNode) == 1) {
         exprNode.init = true;
-        printParserLog("A valid expression found, checking for more aParams");
+        addParserLog("A valid expression found, checking for more aParams");
         getNextToken();
         while(strcmp(currToken, ",") != 0) {
             if(aParams() == 1) {
-                printParserLog("More aParams found");
+                addParserLog("More aParams found");
                 getNextToken();
             } else {
-                printParserLog("Invalid aParams definition, a comman should be followed by another aParam");
+                addParserLog("Invalid aParams definition, a comman should be followed by another aParam");
                 addErrorLog("Invalid aParams definition, a comman should be followed by another aParam", currLineNo);
                 return 0;
             }
         }
     } else {
-        printParserLog("Empty aParams found");
+        addParserLog("Empty aParams found");
         return 1;
     }
 }
 
 int fParams() {
     if (type() == 1) {
-        printParserLog("A valid type detected, checking for ID");
+        addParserLog("A valid type detected, checking for ID");
         getNextToken();
         if (strcmp(currTokenType, "ID") == 0) {
-            printParserLog("A valid ID detected, checking for array sizes [int]");
+            addParserLog("A valid ID detected, checking for array sizes [int]");
             getNextToken();
             if(arraySize() == 1) {
-                printParserLog("A valid array size detected, checking for more array sizes ");
+                addParserLog("A valid array size detected, checking for more array sizes ");
                 getNextToken();
                 while(strcmp(currToken, ",") == 0) {
                     // fParamsTail
@@ -962,31 +1009,30 @@ int fParams() {
                         // continue
                         return 1;
                     } else {
-                        printParserLog("No more fParams detected");
+                        addParserLog("No more fParams detected");
                         // addErrorLog("Invalid fParams definition, a comma should be followed by another valid fParam", currLineNo);
                         return 0;
                     }
                 }
             } else {
-                printParserLog("No array size or fParamsTail detected");
+                addParserLog("No array size or fParamsTail detected");
                 return 1;
             }
         } else {
-            printParserLog("Invalid fParam defintion, type should be followed with an ID...");
+            addParserLog("Invalid fParam defintion, type should be followed with an ID...");
             addErrorLog("Invalid fParam defintion, type should be followed with an ID", currLineNo);
             return 0;
         }
     } else {
-        printParserLog("Invalid fParam defintion, type is expected...");
+        addParserLog("Invalid fParam defintion, type is expected...");
         addErrorLog("Invalid type definition, only the types integer, real are allowed", currLineNo);
         addErrorLog("Invalid fParam defintion, type is expected", currLineNo);
         return 0;
     }
 }
 
-
 int funcBody(FuncBodyNode *funcBodyNode) {
-    printParserLog("Came inside function body");
+    addParserLog("Came inside function body");
 
     getNextToken();
 
@@ -996,53 +1042,63 @@ int funcBody(FuncBodyNode *funcBodyNode) {
     getNextToken();
     while (strcmp(currToken, "}") != 0) {
         if (type() == 1) {
-            printParserLog("Checking for variable definitions");
+            addParserLog("Checking for variable definitions");
             char name[10];
             char type[10];
             strcpy(type, currToken);
             getNextToken();
             if (strcmp(currTokenType, "ID") == 0) {
-                printParserLog("Valid ID detected...");
+                addParserLog("Valid ID detected...");
                 strcpy(name, currToken);
                 getNextToken();
                 if (strcmp(currToken, "[") == 0 || strcmp(currToken, "=") == 0 || strcmp(currToken, ";") == 0) {
-                    printParserLog("Variable declration detected");
-                    VarDeclNode varDeclNode;
-                    varDeclNode.init = false;
-                    memset(varDeclNode.arraySize, 0, sizeof(varDeclNode.arraySize));
-                    varDeclNode.arraySizeCount = 0;
-                    strcpy(varDeclNode.id, name);
-                    strcpy(varDeclNode.type, type);
+                    addParserLog("Variable declration detected");
+                    // VarDeclNode varDeclNode;
+                    varDeclNodes[++varDeclNodesCount].init = false;
+                    // memset(varDeclNode.arraySize, 0, sizeof(varDeclNode.arraySize));
+                    varDeclNodes[varDeclNodesCount].arraySizeCount = 0;
+                    strcpy(varDeclNodes[varDeclNodesCount].id, name);
+                    strcpy(varDeclNodes[varDeclNodesCount].type, type);
                     variableSym variable;
                     strcpy(variable.name, name);
                     strcpy(variable.type, type);
-                    varDecl(variable, &varDeclNode);
-                    varDeclNode.init = true;
-                    funcBodyNode->varDecl[++funcBodyNode->varCount] = varDeclNode;
+                    varDecl(variable, &varDeclNodes[varDeclNodesCount]);
+                    varDeclNodes[varDeclNodesCount].init = true;
+                    funcBodyNode->varDecl[++funcBodyNode->varCount] = varDeclNodes[varDeclNodesCount];
                 }
             } else {
-                printParserLog("Invalid variable declaration: a variable name is not specified!");
+                addParserLog("Invalid variable declaration: a variable name is not specified!");
                 addErrorLog("Invalid variable declaration: a variable name is not specified!", currLineNo);
                 return 0;
             }
         } else {
-            printParserLog("Type check failed, checking for statement definition");
-            StatementNode statementNode;
-            statementNode.init = false;
-            if(statement(&statementNode) == 1) {
-                statementNode.init = true;
-                StatementNode *statementNodePtr1 = &statementNode;
-                funcBodyNode->statement[++funcBodyNode->statementCount] = statementNodePtr1;
-                printParserLog("A valid statement detected, checking for more statements");
+            addParserLog("Type check failed, checking for statement definition");
+            // StatementNode statementNode;
+            statementNodes[++statementNodesCount].init = false;
+            int statCount = statementNodesCount;
+            if(statement(&statementNodes[statCount]) == 1) {
+                statementNodes[statCount].init = true;
+                // StatementNode *statementNodePtr1 = &statementNode;
+                funcBodyNode->statement[++funcBodyNode->statementCount] = &statementNodes[statCount];
+                addParserLog("A valid statement detected, checking for more statements");
                 getNextToken();
-                while(statement(&statementNode) == 1) {
-                    StatementNode *statementNodePtr0 = stmtNodeToPtr(statementNode);
-                    funcBodyNode->statement[++funcBodyNode->statementCount] = statementNodePtr0;
-                    printParserLog("More statements detected");
+                // printf("+++++++++++++++++ %s\n",funcBodyNode->statement[funcBodyNode->statementCount]->varAssignStmt.variable.id);
+
+                statCount = ++statementNodesCount;
+                while(statement(&statementNodes[statementNodesCount]) == 1) {
+                    // printf("================ %s\n",funcBodyNode->statement[funcBodyNode->statementCount]->ifElseStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id);
+                    // StatementNode *statementNodePtr0 = stmtNodeToPtr(statementNode);
+                    
+                    statementNodes[statCount].init = true;
+                    funcBodyNode->statement[++funcBodyNode->statementCount] = &statementNodes[statCount];
+                    // printf("INIT %d %d\n", funcBodyNode->statement[funcBodyNode->statementCount]->ifElseStmtNode.init, statCount);
+                    addParserLog("More statements detected");
                     getNextToken();
+                    // statementNodes[++statCount].init = false;
+                    statCount = ++statementNodesCount;
                 }
             } else {
-                printParserLog("Statement detection failed");
+                addParserLog("Statement detection failed");
             }
         }
         if(strcmp(currToken, "}") != 0) {
@@ -1055,46 +1111,46 @@ int funcBody(FuncBodyNode *funcBodyNode) {
 
 int funcDef(functionSym function, FuncDefNode *funcDefNode){
     // current token is (
-    printParserLog("Came inside function defintion");
+    addParserLog("Came inside function defintion");
 
     if(updateFunctionSymbolTable(function, currLineNo) == 0) {
-        printParserLog("Update function symbol table failed...");
+        addParserLog("Update function symbol table failed...");
         return 0;
     }
 
-    printParserLog("Function symbol table update succesfully");
+    addParserLog("Function symbol table update succesfully");
     getNextToken();
 
     // fParams
     while (strcmp(currToken, ")") != 0) {
-        printParserLog("Checking for fParams");
+        addParserLog("Checking for fParams");
         if(fParams() == 1) {
 
         } else {
-            printParserLog("No fParams detected, so checking the funcBody next");
+            addParserLog("No fParams detected, so checking the funcBody next");
         }
     }
 
-    FuncBodyNode funcBodyNode;
-    funcBodyNode.init = false;
-    memset(funcBodyNode.varDecl, 0, sizeof(funcBodyNode.varDecl));
-    memset(funcBodyNode.statement, 0, sizeof(funcBodyNode.statement));
-    funcBodyNode.varCount = 0;
-    funcBodyNode.statementCount = 0;
-    if(funcBody(&funcBodyNode) == 1) {
-        funcBodyNode.init = true;
-        funcDefNode->funcBody = funcBodyNode;
-        printParserLog("Function body definition successful, checking for ;");
+    // FuncBodyNode funcBodyNode;
+    funcBodyNodes[++funcBodyNodesCount].init = false;
+    // memset(funcBodyNode.varDecl, 0, sizeof(funcBodyNode.varDecl));
+    // memset(funcBodyNode.statement, 0, sizeof(funcBodyNode.statement));
+    funcBodyNodes[funcBodyNodesCount].varCount = 0;
+    funcBodyNodes[funcBodyNodesCount].statementCount = 0;
+    if(funcBody(&funcBodyNodes[funcBodyNodesCount]) == 1) {
+        funcBodyNodes[funcBodyNodesCount].init = true;
+        funcDefNode->funcBody = funcBodyNodes[funcBodyNodesCount];
+        addParserLog("Function body definition successful, checking for ;");
         getNextToken();
         if(strcmp(currToken, ";") == 0) {
-            printParserLog("Function definition successful");
+            addParserLog("Function definition successful");
             return 1;
         } else {
-            printParserLog("Invalid function definition, expected ; at the end");
+            addParserLog("Invalid function definition, expected ; at the end");
             addErrorLog("Invalid function definition, expected ; at the end", currLineNo);
         }
     } else {
-        printParserLog("Invalid function body definition");
+        addParserLog("Invalid function body definition");
         addErrorLog("Invalid function body definition", currLineNo);
         return 0;
     }
@@ -1104,20 +1160,15 @@ int funcDef(functionSym function, FuncDefNode *funcDefNode){
 int classDecl(ClassDeclNode *classDeclNode) {
     classSym classSym;
     getNextToken();      
-    printParserLog("Came inside class declaration..."); 
+    addParserLog("Came inside class declaration..."); 
     if (strcmp(currTokenType, "ID") == 0) {
         strcpy(classDeclNode->id, currToken);
         strcpy(classSym.name, currToken);
-        strcpy(oneOperand.opcode, "CALL");
-        strcpy(oneOperand.operand, classSym.name);
-        generateOneOperandCode(oneOperand, 0); // class decl - scope 0
-        scope++; 
-        generateLabelCode(classSym.name,scope);
         getNextToken();
-        printParserLog("Detected ID..."); 
+        addParserLog("Detected ID..."); 
         if (strcmp(currToken, "{") == 0) {
             getNextToken();
-            printParserLog("Came inside class body...");
+            addParserLog("Came inside class body...");
             updateClassSymbolTable(classSym, currLineNo);
             int x=0;
             while (strcmp(currToken, "}") != 0) {
@@ -1127,47 +1178,41 @@ int classDecl(ClassDeclNode *classDeclNode) {
                     strcpy(type, currToken);
                     getNextToken();
                     if (strcmp(currTokenType, "ID") == 0) {
-                        printParserLog("Valid ID detected...");
+                        addParserLog("Valid ID detected...");
                         strcpy(name, currToken);
                         getNextToken();
                         if (strcmp(currToken, "[") == 0 || strcmp(currToken, "=") == 0 || strcmp(currToken, ";") == 0) {
-                            printParserLog("Variable declration detected");
-                            VarDeclNode varDeclNode;
-                            varDeclNode.init = false;
-                            memset(varDeclNode.arraySize, 0, sizeof(varDeclNode.arraySize));
-                            varDeclNode.arraySizeCount = 0;
-                            strcpy(varDeclNode.id, name);
-                            strcpy(varDeclNode.type, type);
+                            addParserLog("Variable declration detected");
+                            // VarDeclNode varDeclNode;
+                            varDeclNodes[++variableNodesCount].init = false;
+                            memset(varDeclNodes[variableNodesCount].arraySize, 0, sizeof(varDeclNodes[variableNodesCount].arraySize));
+                            varDeclNodes[variableNodesCount].arraySizeCount = 0;
+                            strcpy(varDeclNodes[variableNodesCount].id, name);
+                            strcpy(varDeclNodes[variableNodesCount].type, type);
                             variableSym variable;
                             strcpy(variable.name, name);
                             strcpy(variable.type, type);
-                            varDecl(variable, &varDeclNode);
-                            varDeclNode.init = true;
-                            classDeclNode->varDecl[++classDeclNode->varDeclCount] = varDeclNode;
+                            varDecl(variable, &varDeclNodes[variableNodesCount]);
+                            varDeclNodes[variableNodesCount].init = true;
+                            classDeclNode->varDecl[++classDeclNode->varDeclCount] = varDeclNodes[variableNodesCount];
                         } else if(strcmp(currToken, "(") == 0) {
-                            // scope++;
-                            printParserLog("Function declration detected");
-                            FuncDefNode funcDefNode;
-                            funcDefNode.init = false;
-                            FuncHeadNode funcHeadNode;
-                            strcpy(funcHeadNode.id, name);
-                            strcpy(funcHeadNode.type, type);
-                            funcHeadNode.init = true;
-                            funcDefNode.funcHead = funcHeadNode;
+                            addParserLog("Function declration detected");
+                            // FuncDefNode funcDefNode;
+                            funcDefNodes[++funcDefNodesCount].init = false;
+                            // FuncHeadNode funcHeadNode;
+                            funcHeadNodes[++funcHeadNodesCount].init = true;
+                            strcpy(funcHeadNodes[funcHeadNodesCount].id, name);
+                            strcpy(funcHeadNodes[funcHeadNodesCount].type, type);
+                            funcDefNodes[funcDefNodesCount].funcHead = funcHeadNodes[funcHeadNodesCount];
 
                             functionSym function;
                             strcpy(function.name, name);
                             strcpy(function.type, type);
-                            strcpy(oneOperand.opcode, "CALL");
-                            strcpy(oneOperand.operand, name);
-                            generateOneOperandCode(oneOperand, scope);
-                            
-                            generateLabelCode(function.name, scope);
 
-                            funcDef(function, &funcDefNode);
-                            funcDefNode.init = true;
-                            classDeclNode->funcDef[++classDeclNode->funcDefCount] = funcDefNode;
-                            scope--;
+                            funcDef(function, &funcDefNodes[funcDefNodesCount]);
+                            funcDefNodes[funcDefNodesCount].init = true;
+                            classDeclNode->funcDef[++classDeclNode->funcDefCount] = funcDefNodes[funcDefNodesCount];
+                            printf("XXX: %d\n", classDeclNode->funcDefCount);
                         }
                         getNextToken();
                     } else {
@@ -1175,16 +1220,10 @@ int classDecl(ClassDeclNode *classDeclNode) {
                         return 0;
                     }
                 } else {
-                    printParserLog("Type check failed...");
+                    addParserLog("Type check failed...");
                     addErrorLog("Invalid type definition, only the types integer, real are allowed", currLineNo);
                     return 0;
                 }
-            }
-            if (scope != 0) {
-                scope--;
-                // if the scope is 0 then print the assembly code
-                // clear the array of scopes
-                // get ready for next set of scopes
             }
             return 1;
         } else {
@@ -1202,19 +1241,19 @@ void parse(ProgNode *progNode) {
     getNextToken();
     while (strcmp(currToken, "exit") != 0) {
         if (strcmp(currToken, "class") == 0) {
-            printParserLog("Found class declaration...");
-            ClassDeclNode classDeclNode;
-            classDeclNode.init = false;
-            memset(classDeclNode.varDecl, 0, sizeof(classDeclNode.varDecl));
-            memset(classDeclNode.funcDef, 0, sizeof(classDeclNode.funcDef));
-            classDeclNode.varDeclCount = 0;
-            classDeclNode.funcDefCount = 0;
-            if (classDecl(&classDeclNode) == 1) {
+            addParserLog("Found class declaration...");
+            // ClassDeclNode classDeclNode;
+            classDeclNodes[++classDeclNodesCount].init = false;
+            memset(classDeclNodes[classDeclNodesCount].varDecl, 0, sizeof(classDeclNodes[classDeclNodesCount].varDecl));
+            memset(classDeclNodes[classDeclNodesCount].funcDef, 0, sizeof(classDeclNodes[classDeclNodesCount].funcDef));
+            classDeclNodes[classDeclNodesCount].varDeclCount = 0;
+            classDeclNodes[classDeclNodesCount].funcDefCount = 0;
+            if (classDecl(&classDeclNodes[classDeclNodesCount]) == 1) {
                 // to-do
-                classDeclNode.init = true;
-                progNode->classDecl[++progNode->classDeclCount] = classDeclNode;
+                classDeclNodes[classDeclNodesCount].init = true;
+                progNode->classDecl[++progNode->classDeclCount] = classDeclNodes[classDeclNodesCount];
             } else {
-                printParserLog("Error occured in class declaration");
+                addParserLog("Error occured in class declaration");
             }
         } else {
             addErrorLog("Program should start with class defintion!", currLineNo);
@@ -1226,17 +1265,13 @@ void parse(ProgNode *progNode) {
 
 void parseStart() {
     initTokenFile();
-    generateString("global _start\n\n",scope);
-    generateLabelCode("_start",scope);
 
     ProgNode progNode;
     progNode.init = false;
     parse(&progNode);
+    printParseLogs();
     printAllSymbolTables();
     printErrorLogs();
-    printScopeElements();
     printPhase("CODE GENERATION");
     parseAST(&progNode);
-    
-    // test();
 }

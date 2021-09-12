@@ -29,12 +29,6 @@ void resetScopes() {
     memset(scopesArrayLegnths, 0, sizeof(scopesArrayLegnths[0]) * R);
 }
 
-
-void addScopeElements(char *element, int scope) {
-    strcpy(scopes[scope][scopesArrayLegnths[scope]].element, element);
-    scopesArrayLegnths[scope] = scopesArrayLegnths[scope] + 1;
-}
-
 FILE *getFile() {
     assemblyFilePtr = fopen("assembly.txt", "a");
     if (assemblyFilePtr == NULL) {
@@ -43,52 +37,47 @@ FILE *getFile() {
     }
 }
 
-void printScopeElements() {
+void printCode(char *code) {
     getFile();
-    int i=0;
-    for(i=0; i < 10; i++) {
-        int j=0;
-        for(j=0; j < scopesArrayLegnths[i]; j++) {
-            fprintf(assemblyFilePtr, "%s", scopes[i][j].element);
-        }
-    }
+    fprintf(assemblyFilePtr, "%s", code);
+    printf("%s", code);
 }
 
-void generateString(char str[100], int scope) {
+void generateString(char str[100]) {
     assemblyFilePtr = getFile();
-    addScopeElements(str, scope);
+    printCode(str);
 }
 
-void generateLabelCode(char label[10], int scope) {
+void generateLabelCode(char label[10]) {
     assemblyFilePtr = getFile();
-    addScopeElements(label, scope);
-    addScopeElements(":", scope);
-    addScopeElements("\n", scope);
+    printCode(label);
+    printCode(":");
+    printCode("\n");
 }
 
-void generateNoOperandCode(char opcode[20], int scope) {
+void generateNoOperandCode(char opcode[20]) {
     assemblyFilePtr = getFile();
-    addScopeElements("\t", scope);
-    addScopeElements(opcode, scope);
-    addScopeElements("\n", scope);
+    printCode("\t");
+    printCode(opcode);
+    printCode("\n");
 }
 
-void generateOneOperandCode(OneOperand op, int scope) {
+void generateOneOperandCode(OneOperand op) {
     assemblyFilePtr = getFile();
-    addScopeElements("\t", scope);
-    addScopeElements(op.opcode, scope);
-    addScopeElements(" ", scope);
-    addScopeElements(op.operand, scope);
-    addScopeElements("\n", scope);
+    printCode("\t");
+    printCode(op.opcode);
+    printCode(" ");
+    printCode(op.operand);
+    printCode("\n");
 }
 
-void generateTwoOperandCode(TwoOperand op, int scope) {
+void generateTwoOperandCode(TwoOperand op) {
     assemblyFilePtr = getFile();
-    addScopeElements("\t", scope);
-    addScopeElements(op.opcode, scope);
-    addScopeElements(" ", scope);
-    addScopeElements(op.operand1, scope);
-    addScopeElements(" ", scope);
-    addScopeElements(op.operand2, scope);
-    addScopeElements("\n", scope);
+    printCode("\t");
+    printCode(op.opcode);
+    printCode(" ");
+    printCode(op.operand1);
+    printCode(" ");
+    printCode(op.operand2);
+    printCode("\n");
 }
