@@ -1,7 +1,6 @@
 %{
 #include <stdlib.h>
 #include <string.h>
-#include "main.h"
 #include "tokens.h"
 #include "y.tab.h"
 void yyerror(char *);

@@ -182,13 +182,25 @@ void parseReturnStmt(ReturnStmtNode *returnStmtNode) {
     if(returnStmtNode->expr.arithExpr.init == true) {
         fprintf(assemblyFilePtr, "\tMOV EAX, [%d]\n", getVarLocation(returnStmtNode->expr.arithExpr.term.factor.variable->id));
     } else {
-        printf("BBB\n");
         fprintf(assemblyFilePtr, "\tMOV EAX, [%d]\n", getVarLocation(returnStmtNode->expr.RelArithExprNode.arithExpr1.term.factor.variable->id));
         fprintf(assemblyFilePtr, "\tMOV EBX, [%d]\n", getVarLocation(returnStmtNode->expr.RelArithExprNode.arithExpr2.term.factor.variable->id));
         fprintf(assemblyFilePtr, "\tCMP EAX, EBX\n");
     }
 }
 
+void parseVarAssignStmt(VarAssignStmtNode *varAssignStmtNode) {
+    if (varAssignStmtNode->init == true) {        
+        fprintf(assemblyFilePtr, "\t;VAR ASSIGNMENT STMT NODE\n");
+        fprintf(assemblyFilePtr, "\tMOV EAX, [%d]\n", getVarLocation(varAssignStmtNode->variable.id));
+        if (strlen(varAssignStmtNode->expr.arithExpr.term.factor.num) != 0) {
+            fprintf(assemblyFilePtr, "\tMOV EBX, %s\n", varAssignStmtNode->expr.arithExpr.term.factor.num);
+        } else {
+            fprintf(assemblyFilePtr, "\tMOV EBX, [%d]\n", getVarLocation(varAssignStmtNode->expr.arithExpr.term.factor.variable->id));
+        }
+        
+        fprintf(assemblyFilePtr, "\tMOV EAX, EBX\n");
+    }
+}
 
 void parseWhileStmt(WhileStmtNode *whileStmtNode) {
     fprintf(assemblyFilePtr, "L%d:\n", ++loopCount);
@@ -220,11 +232,10 @@ void parseWhileStmt(WhileStmtNode *whileStmtNode) {
         } else if (whileStmtNode->statBlock.statement[i]->whileStmtNode.init == true) {
             whileStmtNode->statBlock.statement[i]->whileStmtNode.init = false;
         } else if (whileStmtNode->statBlock.statement[i]->readStmtNode.init == true) {
-            fprintf(assemblyFilePtr, "\t;READ STMT\n");
             parseReadStmt(&whileStmtNode->statBlock.statement[i]->readStmtNode);
             whileStmtNode->statBlock.statement[i]->readStmtNode.init = false;
         } else if (whileStmtNode->statBlock.statement[i]->writeStmtNode.init == true) {
-            // ifElseStmtNode->statBlock1.statement[i]->statementType++;
+            parseWriteStmt(&whileStmtNode->statBlock.statement[i]->writeStmtNode);
             whileStmtNode->statBlock.statement[i]->writeStmtNode.init = false;
         } else if (whileStmtNode->statBlock.statement[i]->returnStmtNode.init == true) {
             parseReturnStmt(&whileStmtNode->statBlock.statement[i]->returnStmtNode);
@@ -235,20 +246,6 @@ void parseWhileStmt(WhileStmtNode *whileStmtNode) {
     fprintf(assemblyFilePtr, "\tJMP L%d\n\n", loopCount - 1);
 
     fprintf(assemblyFilePtr, "L%d:\n", loopCount);
-}
-
-void parseVarAssignStmt(VarAssignStmtNode *varAssignStmtNode) {
-    if (varAssignStmtNode->init == true) {        
-        fprintf(assemblyFilePtr, "\t;VAR ASSIGNMENT STMT NODE\n");
-        fprintf(assemblyFilePtr, "\tMOV EAX, [%d]\n", getVarLocation(varAssignStmtNode->variable.id));
-        if (strlen(varAssignStmtNode->expr.arithExpr.term.factor.num) != 0) {
-            fprintf(assemblyFilePtr, "\tMOV EBX, %s\n", varAssignStmtNode->expr.arithExpr.term.factor.num);
-        } else {
-            fprintf(assemblyFilePtr, "\tMOV EBX, [%d]\n", getVarLocation(varAssignStmtNode->expr.arithExpr.term.factor.variable->id));
-        }
-        
-        fprintf(assemblyFilePtr, "\tMOV EAX, EBX\n");
-    }
 }
 
 void parseIfElseStmt(IfElseStmtNode *ifElseStmtNode) {
@@ -279,11 +276,10 @@ void parseIfElseStmt(IfElseStmtNode *ifElseStmtNode) {
             } else if (ifElseStmtNode->statBlock1.statement[i]->whileStmtNode.init == true) {
                 ifElseStmtNode->statBlock1.statement[i]->whileStmtNode.init = false;
             } else if (ifElseStmtNode->statBlock1.statement[i]->readStmtNode.init == true) {
-                fprintf(assemblyFilePtr, "\t;READ STMT\n");
                 parseReadStmt(&ifElseStmtNode->statBlock1.statement[i]->readStmtNode);
                 ifElseStmtNode->statBlock1.statement[i]->readStmtNode.init = false;
             } else if (ifElseStmtNode->statBlock1.statement[i]->writeStmtNode.init == true) {
-                // ifElseStmtNode->statBlock1.statement[i]->statementType++;
+                parseWriteStmt(&ifElseStmtNode->statBlock1.statement[i]->writeStmtNode);
                 ifElseStmtNode->statBlock1.statement[i]->writeStmtNode.init = false;
             } else if (ifElseStmtNode->statBlock1.statement[i]->returnStmtNode.init == true) {
                 parseReturnStmt(&ifElseStmtNode->statBlock1.statement[i]->returnStmtNode);
@@ -302,11 +298,10 @@ void parseIfElseStmt(IfElseStmtNode *ifElseStmtNode) {
             } else if (ifElseStmtNode->statBlock2.statement[i]->whileStmtNode.init == true) {
                 ifElseStmtNode->statBlock2.statement[i]->whileStmtNode.init = false;
             } else if (ifElseStmtNode->statBlock2.statement[i]->readStmtNode.init == true) {
-                fprintf(assemblyFilePtr, "\t;READ STMT\n");
                 parseReadStmt(&ifElseStmtNode->statBlock2.statement[i]->readStmtNode);
                 ifElseStmtNode->statBlock1.statement[i]->readStmtNode.init = false;
             } else if (ifElseStmtNode->statBlock2.statement[i]->writeStmtNode.init == true) {
-                // ifElseStmtNode->statBlock1.statement[i]->statementType++;
+                parseWriteStmt(&ifElseStmtNode->statBlock2.statement[i]->writeStmtNode);
                 ifElseStmtNode->statBlock2.statement[i]->writeStmtNode.init = false;
             } else if (ifElseStmtNode->statBlock2.statement[i]->returnStmtNode.init == true) {
                 parseReturnStmt(&ifElseStmtNode->statBlock2.statement[i]->returnStmtNode);
@@ -327,10 +322,8 @@ void parseFuncDef(FuncDefNode *funcDefNode) {
                 if (funcBodyNode.statement[i]->varAssignStmt.init == true) {
                     parseVarAssignStmt(&funcBodyNode.statement[i]->varAssignStmt);
                     funcBodyNode.statement[i]->varAssignStmt.init = false;
-                    // funcBodyNode.statement[i]->statementType++;
                 } else if (funcBodyNode.statement[i]->ifElseStmtNode.init == true) {
                     parseIfElseStmt(&funcBodyNode.statement[i]->ifElseStmtNode);
-                    // funcBodyNode.statement[i]->statementType++;
                     funcBodyNode.statement[i]->ifElseStmtNode.init = false;
                 } else if (funcBodyNode.statement[i]->whileStmtNode.init == true) {
                     parseWhileStmt(&funcBodyNode.statement[i]->whileStmtNode);

@@ -69,33 +69,6 @@ char *getNextToken() {
     currLineNo = strtok(NULL, ":"); 
 }
 
-char* varTwo;
-
-// StatementNode *stmtNodeToPtr(StatementNode statementNode) {
-//     StatementNode *stmtNodePtr;
-//     stmtNodePtr->init = statementNode.init;
-//     stmtNodePtr->ifElseStmtNode = statementNode.ifElseStmtNode;
-//     stmtNodePtr->readStmtNode = statementNode.readStmtNode;
-//     stmtNodePtr->returnStmtNode = statementNode.returnStmtNode;
-//     stmtNodePtr->statementType = statementNode.statementType;
-//     stmtNodePtr->varAssignStmt = statementNode.varAssignStmt;
-//     stmtNodePtr->whileStmtNode = statementNode.whileStmtNode;
-//     stmtNodePtr->writeStmtNode = statementNode.writeStmtNode;
-//     return stmtNodePtr;
-// }
-
-// VariableNode *varNodeToPtr(VariableNode *variableNode) {
-//     VariableNode *varNodePtr;
-//     strcpy(varNodePtr->id , variableNode->id);
-//     varNodePtr->idnestCount = variableNode->idnestCount;
-//     memcpy(varNodePtr->idnestNode , variableNode->idnestNode, sizeof *varNodePtr->idnestNode);
-//     varNodePtr->indiceCount = variableNode->indiceCount;
-//     memcpy(varNodePtr->indiceNode , variableNode->indiceNode, sizeof *varNodePtr->indiceNode);
-    
-//     varNodePtr->init = variableNode->init;
-//     return varNodePtr;
-// }
-
 int type() {
     if (strcmp(currToken, "integer") == 0 || 
         strcmp(currToken, "real") == 0    || 
@@ -119,22 +92,6 @@ int varDecl(variableSym variable, VarDeclNode *varDeclNode) {
             getNextToken(); 
             if (strcmp(currToken, "]") == 0) {
                 getNextToken();
-                // if (strcmp(currToken, "=") == 0) {                
-                //     getNextToken();
-                //     if(strcmp(currTokenType, "ID") == 0 ||
-                //         strcmp(currTokenType, "INTEGER") == 0 ||
-                //         strcmp(currTokenType, "NONZERO") == 0 ||
-                //         strcmp(currTokenType, "ALPHANUM") == 0 ||
-                //         strcmp(currTokenType, "FRACTION") == 0 ||
-                //         strcmp(currTokenType, "DIGIT") == 0) {
-                //         strcpy(variable.value, currToken);
-                //     } else {
-                //         addParserLog("Invalid variable declaration: check variable assignment");
-                //         addErrorLog("Invalid variable declaration: check variable assignment", currLineNo);
-                //         return 0;
-                //     }
-                //     getNextToken();
-                // }
                 if (strcmp(currToken, ";") == 0) {
                     // insert into variable symbol table
                     addParserLog("Variable declaration successful!");
@@ -274,26 +231,6 @@ int variable(VariableNode *variableNode) {
     if(strcmp(currTokenType, "ID") == 0) {
         strcpy(variableNode->id,currToken);
         variableNode->init = true;
-        // adding this inside because Idnest also needs ID first so saving some logic space
-        // if(idnest() == 1) {
-        //     addParserLog("Valid idnest detected, checking for more idnest definition if available");
-        //     while(idnest() == 1) {
-        //         addParserLog("More idnest definition found");
-        //         getNextToken();
-        //     }
-        // } 
-
-        // addParserLog("Valid ID detected inside variable, checking for indice");
-        // if(indice() == 1) {
-        //     addParserLog("Valid indice detected, checking for more indice definition if available");
-        //     getNextToken();
-        //     while (indice() == 1) {
-        //         addParserLog("Looping indices inside idnest");
-        //         getNextToken();
-        //     }
-        //     // no need to getNextToken() after this method
-        //     return 1;
-        // }
         return 1;
     } else {
         addParserLog("No variable definitions found");
@@ -313,8 +250,6 @@ int sign() {
 }
 
 int factor(FactorNode *factorNode) {
-    // VariableNode variableNode = variableNodes[++variableNodesCount];
-    // strcpy(variableNodes[variableNodesCount].id, "ABC");
     variableNodes[++variableNodesCount].init = false;
     memset(variableNodes[variableNodesCount].idnestNode, 0, sizeof(variableNodes[variableNodesCount].idnestNode));
     memset(variableNodes[variableNodesCount].indiceNode, 0, sizeof(variableNodes[variableNodesCount].indiceNode));
@@ -359,7 +294,6 @@ int factor(FactorNode *factorNode) {
                             getNextToken();
                         }
                     }
-
                     if(strcmp(currToken, ")") == 0) {
                         addParserLog("Valid factor definition found");
                         return 1;
@@ -373,7 +307,6 @@ int factor(FactorNode *factorNode) {
                 addErrorLog("Invalid Factor definition, an ID should be followed by (aParams)", currLineNo);
                 return 0;
             }
-
         } else {
             addParserLog("Invalid Factor definition, an idnest should be followed by an ID");
             addErrorLog("Invalid Factor definition, an idnest should be followed by an ID", currLineNo);
@@ -460,7 +393,6 @@ int factor(FactorNode *factorNode) {
 }
 
 int term(TermNode *termNode) {
-    // FactorNode factorNode = factorNodes[++factorNodesCount];
     factorNodes[++factorNodesCount].init = false;
     if(factor(&factorNodes[factorNodesCount]) == 1) {
         factorNodes[factorNodesCount].init = true;
@@ -491,7 +423,6 @@ int term(TermNode *termNode) {
 
 int arithExpr(ArithExprNode *arithExprNode) {
     addParserLog("Checking arithmatic expression");
-    // TermNode termNode = termNodes[++termNodesCount];
     termNodes[++termNodesCount].init = false;
     if(term(&termNodes[termNodesCount]) == 1) {
         termNodes[termNodesCount].init = true;
@@ -518,13 +449,10 @@ int arithExpr(ArithExprNode *arithExprNode) {
 
 int expr(ExprNode *exprNode) {
     addParserLog("Checking for expression defintion");
-    // ArithExprNode arithExprNode1 = arithExprNodes[++arithExprNodesCount];
     arithExprNodes[++arithExprNodesCount].init = false;
     if (arithExpr(&arithExprNodes[arithExprNodesCount]) == 1) {
-        // arithExprNode.init = true;
         arithExprNodes[arithExprNodesCount].init = true;
         exprNode->arithExpr = arithExprNodes[arithExprNodesCount];
-        // RelArithExprNode relArithExprNode;
         relArithExprNodes[++relArithExprNodesCount].init = false;
         if (relOp() == 1) {
             exprNode->arithExpr.init = false;
@@ -532,7 +460,6 @@ int expr(ExprNode *exprNode) {
             strcpy(relArithExprNodes[relArithExprNodesCount].relOp, currToken);
             addParserLog("Relational operator detected, checking for arithmatic definition");
             getNextToken();
-            // ArithExprNode arithExprNode2 = arithExprNodes[++arithExprNodesCount];
             arithExprNodes[++arithExprNodesCount].init = false;
             if(arithExpr(&arithExprNodes[arithExprNodesCount]) == 1) {
                 arithExprNodes[arithExprNodesCount].init = true;
@@ -569,20 +496,13 @@ int statBlock(StatBlockNode *statBlockNode) {
         getNextToken();
         if(statement(&statementNodes[statementNodesCount]) == 1) {
             statementNodes[statementNodesCount].init = true;
-            // StatementNode *statementNodePtr4 = stmtNodeToPtr(statementNode);
             statBlockNode->statement[++statBlockNode->statementNodeCount] = &statementNodes[statementNodesCount];
-            // printf("---\n");
-            // printf("TEST %s %d\n", statementNodes[statementNodesCount].returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id, statBlockNode->statementNodeCount);
-            // printf("xxx\n");
             addParserLog("Detected statement , checking for more statements");
             getNextToken();
             while (statement(&statementNodes[++statementNodesCount]) == 1){
-                // StatementNode *statementNodePtr4 = stmtNodeToPtr(statementNode);
                 statBlockNode->statement[++statBlockNode->statementNodeCount] = &statementNodes[statementNodesCount];
-                // printf("XXX%s\n", statBlockNode->statement[statBlockNode->statementNodeCount]->varAssignStmt.variable.id);
                 addParserLog("Detected more statements");
                 getNextToken();
-                    // printf("%s\n", statementNode->varAssignStmt.expr.arithExpr.term.factor.variable->id);
             }
         } else {
             addParserLog("No statements found inside statBlock");
@@ -596,7 +516,6 @@ int statBlock(StatBlockNode *statBlockNode) {
             return 0;
         }
     } else if(statement(&statementNodes[statementNodesCount]) == 1){
-        // StatementNode *statementNodePtr4 = stmtNodeToPtr(statementNode);
         statBlockNode->statement[statementNodesCount] = &statementNodes[statementNodesCount];
         addParserLog("statBlock detected succesfully");
         return 1;
@@ -611,15 +530,10 @@ int statement(StatementNode *statementNode) {
 
     // VariableNode variableNode0;
     variableNodes[++variableNodesCount].init = false;
-    // memset(variableNode0.idnestNode, 0, sizeof(variableNode0.idnestNode));
-    // memset(variableNode0.indiceNode, 0, sizeof(variableNode0.indiceNode));
-    // variableNode0.idnestCount = 0;
-    // variableNode0.indiceCount = 0;
 
     if(variable(&variableNodes[variableNodesCount]) == 1) {
         statementNode->statementType = 0;
         variableNodes[variableNodesCount].init = true;
-        // VarAssignStmtNode varAssignStmtNode;
         varAssignStmtNodes[++varAssignStmtNodesCount].init = false;
         varAssignStmtNodes[varAssignStmtNodesCount].variable = variableNodes[variableNodesCount];
 
@@ -628,10 +542,8 @@ int statement(StatementNode *statementNode) {
         if(assignOp() == 1) {
             addParserLog("Assign operator detected, checking for expression");
             getNextToken();
-            // ExprNode exprNode;
             exprNodes[++exprNodesCount].init = false;
             bool isNum = false;
-            // printf("XXX %s\n", currToken);
                 if(strcmp(currTokenType, "NUM") == 0 ||
                 strcmp(currTokenType, "INTEGER") == 0 ||
                 strcmp(currTokenType, "FRACTION") == 0 ||
@@ -708,20 +620,12 @@ int statement(StatementNode *statementNode) {
                                 if(statBlock(&statBlockNodes[statBlockNodesCount]) == 1) {
                                     statBlockNodes[statBlockNodesCount].init = true;
                                     ifElseStmtNodes[ifElseStmtNodesCount].statBlock2 = statBlockNodes[statBlockNodesCount];
-                                    // printf("+++++++ %s\n",ifElseStmtNode.statBlock2.statement[statBlockNodes[statBlockNodesCount].statementNodeCount]->returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id);
-                                    // printf("+++++++ %s\n",ifElseStmtNode.statBlock1.statement[statBlockNodes[statBlockNodesCount].statementNodeCount]->returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id);
-                                    // printf("STAT COUNT: %d\n", statBlockNodes[statementNodesCount].statementNodeCount);
-                                    // printf("STAT 2 %s\n", statBlockNodes[statementNodesCount].statement[statBlockNodes->statementNodeCount]->returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id);
                                     addParserLog("Detected statBlock , checking for ;");
                                     getNextToken();
                                     if(strcmp(currToken, ";") == 0) {
                                         ifElseStmtNodes[ifElseStmtNodesCount].init = true;
                                         statementNode->ifElseStmtNode = ifElseStmtNodes[ifElseStmtNodesCount];
                                         statementNode->init = true;
-                                        // printf("DOG %d -- %d\n", ifElseStmtNodes[ifElseStmtNodesCount].init, funcBodyNodesCount);
-                                        
-                                    // printf("+++ %s\n",statementNode->ifElseStmtNode.statBlock2.statement[statBlockNodes[statBlockNodesCount].statementNodeCount]->returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id);
-                                    // printf("--- %s\n",statementNode->ifElseStmtNode.statBlock1.statement[statBlockNodes[statBlockNodesCount].statementNodeCount]->returnStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id);
                                         addParserLog("If condition definition succesfull");
                                         return 1;
                                     } else {
@@ -927,14 +831,12 @@ int statement(StatementNode *statementNode) {
         }
     } else if (strcmp(currToken, "return") == 0) {
         statementNode->statementType = 5;
-        // ReturnStmtNode returnStmtNode;
         returnStatementNodes[++returnStatementNodesCount].init = false;
         addParserLog("Return detected, checking for (expr)");
         getNextToken();
         if(strcmp(currToken, "(") == 0) {
             addParserLog("Detected ( , checking for expression");
             getNextToken();
-            // ExprNode exprNode;
             exprNodes[++exprNodesCount].init = false;
             if(expr(&exprNodes[exprNodesCount]) == 1) {
                 exprNodes[exprNodesCount].init = true;
@@ -948,7 +850,6 @@ int statement(StatementNode *statementNode) {
                     if(strcmp(currToken, ";") == 0) {
                         statementNode->returnStmtNode = returnStatementNodes[returnStatementNodesCount];
                         statementNode->init = true;
-                        // printf("RET %s\n", returnStatementNodes[1].expr.arithExpr.term.factor.variable->id);
                         addParserLog("Return definition succesfull");
                         return 1;
                     } else {
@@ -1043,7 +944,6 @@ int fParams() {
                         return 1;
                     } else {
                         addParserLog("No more fParams detected");
-                        // addErrorLog("Invalid fParams definition, a comma should be followed by another valid fParam", currLineNo);
                         return 0;
                     }
                 }
@@ -1085,9 +985,7 @@ int funcBody(FuncBodyNode *funcBodyNode) {
                 getNextToken();
                 if (strcmp(currToken, "[") == 0 || strcmp(currToken, "=") == 0 || strcmp(currToken, ";") == 0) {
                     addParserLog("Variable declration detected");
-                    // VarDeclNode varDeclNode;
                     varDeclNodes[++varDeclNodesCount].init = false;
-                    // memset(varDeclNode.arraySize, 0, sizeof(varDeclNode.arraySize));
                     varDeclNodes[varDeclNodesCount].arraySizeCount = 0;
                     strcpy(varDeclNodes[varDeclNodesCount].id, name);
                     strcpy(varDeclNodes[varDeclNodesCount].type, type);
@@ -1110,23 +1008,16 @@ int funcBody(FuncBodyNode *funcBodyNode) {
             int statCount = statementNodesCount;
             if(statement(&statementNodes[statCount]) == 1) {
                 statementNodes[statCount].init = true;
-                // StatementNode *statementNodePtr1 = &statementNode;
                 funcBodyNode->statement[++funcBodyNode->statementCount] = &statementNodes[statCount];
                 addParserLog("A valid statement detected, checking for more statements");
                 getNextToken();
-                // printf("+++++++++++++++++ %s\n",funcBodyNode->statement[funcBodyNode->statementCount]->varAssignStmt.variable.id);
 
                 statCount = ++statementNodesCount;
                 while(statement(&statementNodes[statementNodesCount]) == 1) {
-                    // printf("================ %s\n",funcBodyNode->statement[funcBodyNode->statementCount]->ifElseStmtNode.expr.RelArithExprNode.arithExpr1.term.factor.variable->id);
-                    // StatementNode *statementNodePtr0 = stmtNodeToPtr(statementNode);
-                    
                     statementNodes[statCount].init = true;
                     funcBodyNode->statement[++funcBodyNode->statementCount] = &statementNodes[statCount];
-                    // printf("INIT %d %d\n", funcBodyNode->statement[funcBodyNode->statementCount]->ifElseStmtNode.init, statCount);
                     addParserLog("More statements detected");
                     getNextToken();
-                    // statementNodes[++statCount].init = false;
                     statCount = ++statementNodesCount;
                 }
             } else {
@@ -1165,8 +1056,6 @@ int funcDef(functionSym function, FuncDefNode *funcDefNode){
 
     // FuncBodyNode funcBodyNode;
     funcBodyNodes[++funcBodyNodesCount].init = false;
-    // memset(funcBodyNode.varDecl, 0, sizeof(funcBodyNode.varDecl));
-    // memset(funcBodyNode.statement, 0, sizeof(funcBodyNode.statement));
     funcBodyNodes[funcBodyNodesCount].varCount = 0;
     funcBodyNodes[funcBodyNodesCount].statementCount = 0;
     if(funcBody(&funcBodyNodes[funcBodyNodesCount]) == 1) {
@@ -1215,7 +1104,6 @@ int classDecl(ClassDeclNode *classDeclNode) {
                         getNextToken();
                         if (strcmp(currToken, "[") == 0 || strcmp(currToken, "=") == 0 || strcmp(currToken, ";") == 0) {
                             addParserLog("Variable declration detected");
-                            // VarDeclNode varDeclNode;
                             varDeclNodes[++variableNodesCount].init = false;
                             memset(varDeclNodes[variableNodesCount].arraySize, 0, sizeof(varDeclNodes[variableNodesCount].arraySize));
                             varDeclNodes[variableNodesCount].arraySizeCount = 0;
@@ -1229,9 +1117,7 @@ int classDecl(ClassDeclNode *classDeclNode) {
                             classDeclNode->varDecl[++classDeclNode->varDeclCount] = varDeclNodes[variableNodesCount];
                         } else if(strcmp(currToken, "(") == 0) {
                             addParserLog("Function declration detected");
-                            // FuncDefNode funcDefNode;
                             funcDefNodes[++funcDefNodesCount].init = false;
-                            // FuncHeadNode funcHeadNode;
                             funcHeadNodes[++funcHeadNodesCount].init = true;
                             strcpy(funcHeadNodes[funcHeadNodesCount].id, name);
                             strcpy(funcHeadNodes[funcHeadNodesCount].type, type);
@@ -1244,7 +1130,6 @@ int classDecl(ClassDeclNode *classDeclNode) {
                             funcDef(function, &funcDefNodes[funcDefNodesCount]);
                             funcDefNodes[funcDefNodesCount].init = true;
                             classDeclNode->funcDef[++classDeclNode->funcDefCount] = funcDefNodes[funcDefNodesCount];
-                            // printf("XXX: %d\n", classDeclNode->funcDefCount);
                         }
                         getNextToken();
                     } else {
@@ -1269,12 +1154,10 @@ int classDecl(ClassDeclNode *classDeclNode) {
 }
 
 void parse(ProgNode *progNode) {
-    // printPhase("Syntax, Semantic Analysis");
     getNextToken();
     while (strcmp(currToken, "EOF") != 0) {
         if (strcmp(currToken, "class") == 0) {
             addParserLog("Found class declaration...");
-            // ClassDeclNode classDeclNode;
             classDeclNodes[++classDeclNodesCount].init = false;
             memset(classDeclNodes[classDeclNodesCount].varDecl, 0, sizeof(classDeclNodes[classDeclNodesCount].varDecl));
             memset(classDeclNodes[classDeclNodesCount].funcDef, 0, sizeof(classDeclNodes[classDeclNodesCount].funcDef));

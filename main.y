@@ -7,14 +7,6 @@
 #include "log.h"
 #include "parser.h"
 
-/* prototypes */
-// nodeType *cls(char* value);
-// nodeType *var(char* type, char* name);
-
-/* symbol tables */
-// struct symbols clsSymbTable[20];
-// struct symbols varSymbTable[20];
-
 /* symbol table ids */
 int clsId;
 int varId;
@@ -22,14 +14,6 @@ int varId;
 int yylex(void);
 void yyerror(char *s);
 %}
-
-// %union {
-//     char* id;
-//     int iValue;                 /* integer value */
-//     char *mLocation;            /* symbol table index */
-//     nodeType *nPtr;             /* node pointer */
-//     char *symName;              /* symbol value */
-// };
 
 %token OP CP OSB CSB DOT OB CB SC
 %token ASTK FS PCT
@@ -57,22 +41,6 @@ double prog_time, lex_time, parse_time, codegen_time;
 void yyerror(char *s) {
     fprintf(stdout, "%s\n", s);
 	exit(0);
-}
-
-int main(void) {
-
-    prog_start = clock();
-
-    lexicalAnalysis();
-    syntaxtParsing();
-    codeGeneration();
-    
-    prog_end = clock();
-    prog_time = ((double) (prog_end - prog_start)) / CLOCKS_PER_SEC;
-
-    printStatus();
-
-    return 0;
 }
 
 void lexicalAnalysis() {
@@ -133,4 +101,19 @@ void printStatus() {
     if (errorsCount > 0) {
         printErrorLogs();
     }
+}
+
+int main(void) {
+
+    prog_start = clock();
+
+    lexicalAnalysis();
+    syntaxtParsing();
+    codeGeneration();
+    
+    prog_end = clock();
+    prog_time = ((double) (prog_end - prog_start)) / CLOCKS_PER_SEC;
+
+    printStatus();
+    return 0;
 }
