@@ -11,6 +11,11 @@ char* token;
 char* currToken;
 char* currTokenType;
 char* currLineNo;
+char* prevToken;
+char* prevTokenType;
+char* prevLineNo;
+
+ProgNode progNode;
 
 ArithExprNode arithExprNodes[100];
 RelArithExprNode relArithExprNodes[100];
@@ -56,6 +61,9 @@ void initTokenFile() {
 
 char *getNextToken() {
     token = fgets(line, 255, tokensFilePtr);
+    prevLineNo = currLineNo;
+    prevToken = currToken;
+    prevTokenType = currTokenType;
     currTokenType = strtok(token, ":");  
     currToken = strtok(NULL, ":");
     currLineNo = strtok(NULL, ":"); 
@@ -131,7 +139,7 @@ int varDecl(variableSym variable, VarDeclNode *varDeclNode) {
                     // insert into variable symbol table
                     addParserLog("Variable declaration successful!");
                     strcpy(variable.value, "null");
-                    if(updateVariableSymbolTable(variable, currLineNo) == 0) {
+                    if(insertVariableSymbolTableValue(variable, currLineNo) == 0) {
                         addParserLog("Update variable symbol table failed...");
                         return 0;
                     }
@@ -150,7 +158,7 @@ int varDecl(variableSym variable, VarDeclNode *varDeclNode) {
         addParserLog("Variable declaration successful!");
         strcpy(variable.size, "10");
         strcpy(variable.value, "null");
-        if(updateVariableSymbolTable(variable, currLineNo) == 0) {
+        if(insertVariableSymbolTableValue(variable, currLineNo) == 0) {
             addParserLog("Update variable symbol table failed...");
             return 0;
         }
@@ -265,6 +273,7 @@ int variable(VariableNode *variableNode) {
     // at this point ID and next token would have been fetched
     if(strcmp(currTokenType, "ID") == 0) {
         strcpy(variableNode->id,currToken);
+        variableNode->init = true;
         // adding this inside because Idnest also needs ID first so saving some logic space
         // if(idnest() == 1) {
         //     addParserLog("Valid idnest detected, checking for more idnest definition if available");
@@ -320,6 +329,14 @@ int factor(FactorNode *factorNode) {
         factorNode->variable = &variableNodes[variableNodesCount];
         // no need to getNextToken() afer this
         addParserLog("Valid variable definition found, factor defintion success");
+        return 1;
+    } else if(strcmp(currTokenType, "NUM") == 0 ||
+                strcmp(currTokenType, "INTEGER") == 0 ||
+                strcmp(currTokenType, "FRACTION") == 0 ||
+                strcmp(currTokenType, "DIGIT") == 0 ||
+                strcmp(currTokenType, "NONZERO") == 0) {
+        addParserLog("A valid ID detected, factor definition success");
+        strcpy(factorNode->num, currToken);
         return 1;
     } else if (idnest(&idnestNode) == 1) {
         addParserLog("Valid idnest detected, checking for more idnest definition if available");
@@ -392,9 +409,6 @@ int factor(FactorNode *factorNode) {
             return 0;
         }
 
-    } else if(strcmp(currTokenType, "NUM") == 0) {
-        addParserLog("A valid ID detected, factor definition success");
-        return 1;
     } else if(strcmp(currToken, "(") == 0) {
         addParserLog("Checking for (expression)");
         getNextToken();
@@ -508,10 +522,12 @@ int expr(ExprNode *exprNode) {
     arithExprNodes[++arithExprNodesCount].init = false;
     if (arithExpr(&arithExprNodes[arithExprNodesCount]) == 1) {
         // arithExprNode.init = true;
+        arithExprNodes[arithExprNodesCount].init = true;
         exprNode->arithExpr = arithExprNodes[arithExprNodesCount];
         // RelArithExprNode relArithExprNode;
         relArithExprNodes[++relArithExprNodesCount].init = false;
         if (relOp() == 1) {
+            exprNode->arithExpr.init = false;
             relArithExprNodes[relArithExprNodesCount].arithExpr1 = arithExprNodes[arithExprNodesCount];
             strcpy(relArithExprNodes[relArithExprNodesCount].relOp, currToken);
             addParserLog("Relational operator detected, checking for arithmatic definition");
@@ -614,7 +630,24 @@ int statement(StatementNode *statementNode) {
             getNextToken();
             // ExprNode exprNode;
             exprNodes[++exprNodesCount].init = false;
+            bool isNum = false;
+            // printf("XXX %s\n", currToken);
+                if(strcmp(currTokenType, "NUM") == 0 ||
+                strcmp(currTokenType, "INTEGER") == 0 ||
+                strcmp(currTokenType, "FRACTION") == 0 ||
+                strcmp(currTokenType, "DIGIT") == 0 ||
+                strcmp(currTokenType, "NONZERO") == 0) {
+                    isNum = true;
+                }
+            
             if(expr(&exprNodes[exprNodesCount]) == 1) {
+                if(isNum == true) {
+                    variableSym *v = getVarriableSymbol(varAssignStmtNodes[varAssignStmtNodesCount].variable.id);
+                    printf("VAR %s\n", v->name);
+                    strcpy(v->value, exprNodes[exprNodesCount].arithExpr.term.factor.num);
+                    updateVariableSymbolTableValue(v);   
+                }
+
                 exprNodes[exprNodesCount].init = true;
                 varAssignStmtNodes[varAssignStmtNodesCount].expr = exprNodes[exprNodesCount];
                 addParserLog("Expression detected, checking for ;");
@@ -1033,7 +1066,6 @@ int fParams() {
 
 int funcBody(FuncBodyNode *funcBodyNode) {
     addParserLog("Came inside function body");
-
     getNextToken();
 
     if (strcmp(currToken, "{") != 0) {
@@ -1113,7 +1145,7 @@ int funcDef(functionSym function, FuncDefNode *funcDefNode){
     // current token is (
     addParserLog("Came inside function defintion");
 
-    if(updateFunctionSymbolTable(function, currLineNo) == 0) {
+    if(insertFunctionSymbolTableValue(function, currLineNo) == 0) {
         addParserLog("Update function symbol table failed...");
         return 0;
     }
@@ -1169,7 +1201,7 @@ int classDecl(ClassDeclNode *classDeclNode) {
         if (strcmp(currToken, "{") == 0) {
             getNextToken();
             addParserLog("Came inside class body...");
-            updateClassSymbolTable(classSym, currLineNo);
+            insertClassSymbolTableValue(classSym, currLineNo);
             int x=0;
             while (strcmp(currToken, "}") != 0) {
                 if (type() == 1) {
@@ -1212,7 +1244,7 @@ int classDecl(ClassDeclNode *classDeclNode) {
                             funcDef(function, &funcDefNodes[funcDefNodesCount]);
                             funcDefNodes[funcDefNodesCount].init = true;
                             classDeclNode->funcDef[++classDeclNode->funcDefCount] = funcDefNodes[funcDefNodesCount];
-                            printf("XXX: %d\n", classDeclNode->funcDefCount);
+                            // printf("XXX: %d\n", classDeclNode->funcDefCount);
                         }
                         getNextToken();
                     } else {
@@ -1237,9 +1269,9 @@ int classDecl(ClassDeclNode *classDeclNode) {
 }
 
 void parse(ProgNode *progNode) {
-    printPhase("Syntax, Semantic Analysis");
+    // printPhase("Syntax, Semantic Analysis");
     getNextToken();
-    while (strcmp(currToken, "exit") != 0) {
+    while (strcmp(currToken, "EOF") != 0) {
         if (strcmp(currToken, "class") == 0) {
             addParserLog("Found class declaration...");
             // ClassDeclNode classDeclNode;
@@ -1266,12 +1298,14 @@ void parse(ProgNode *progNode) {
 void parseStart() {
     initTokenFile();
 
-    ProgNode progNode;
+    
     progNode.init = false;
     parse(&progNode);
-    printParseLogs();
+    // printParseLogs();
     printAllSymbolTables();
-    printErrorLogs();
-    printPhase("CODE GENERATION");
+    // printErrorLogs();
+}
+
+void generateCode() {
     parseAST(&progNode);
 }

@@ -1,38 +1,10 @@
-Prog
-
 class one {                                                             
-    real varone[1];
+    real varone;
     real vartwo;
     real funcone() {
-        varone = vartwo;
-        if(varone>vartwo) then{
-            return(varone>vartwo);
-        } else {
-            return(varone>vartwo);
+        while (vartwo > 1) do {
+            varone = vartwo;
+            return(varone);
         };
-        varone = vartwo;
     };
-    real varthree;
-    real functwo() {
-        varthree = vartwo;
-        if(varthree>varone) then{
-            return(varthree>varone);
-        } else {
-            return(varthree>varone);
-        };
-    }; 
 }
-
-class two {
-    real varthreee;
-    real functwos() {
-        varthree = vartwo;
-        if(varthree>varone) then{
-            return(varthree>varone);
-        } else {
-            return(varthree>varone);
-        };
-    }; 
-}
-
-exit

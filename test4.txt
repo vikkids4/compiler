@@ -1,0 +1,9 @@
+class one {
+    real funcone() {
+        if (1 > 0) then {
+            
+        } else {
+
+        };
+    };
+}

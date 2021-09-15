@@ -12,11 +12,16 @@ typedef struct{
 
 int phaseCount = 0;
 int parserLogNo = 0;
-int errorLogNo = 0;
+int errorLogNo = -1;
 parserLog parserLogs[500];
 errorLog errorLogs[500];
 
 FILE *logFilePtr;
+
+// Get errors count
+int getErrorsCount() {
+    return errorLogNo + 1;
+}
 
 // Printing parser logs
 void addParserLog(char *log) {
@@ -53,28 +58,28 @@ void printPhase(char *phase) {
 
 // Printing Info logs
 void printInfo(char *info) {
-    printf("\n\n==============================================================\n\n");
-    printf("[INFOs] %s", info);
-    printf("\n\n==============================================================\n\n");
+    // printf("\n\n==============================================================\n\n");
+    printf("[INFO] %s\n", info);
+    // printf("\n\n==============================================================\n\n");
 }
 
 // Storing overall error logs
 void addErrorLog(char *error, char *lineno) {
-    strcpy(errorLogs[errorLogNo].error, error);
+    strcpy(errorLogs[++errorLogNo].error, error);
     strcpy(errorLogs[errorLogNo].lineno, lineno);
-    errorLogNo++;
+    // errorLogNo++;
 }
 
 // Printing error logs
 void printErrorLogs() {
-    printf("\n\n##############################################################\n\n");
+    printf("------------------------------------------------------------------------------\n");
     printf("Error Logs");
-    printf("\n\n##############################################################\n\n");
+    printf("\n------------------------------------------------------------------------------\n");
     
     int i;
-    for(i=0; i < errorLogNo; i++) {
+    for(i=0; i < errorLogNo + 1; i++) {
         printf("[%d] %s in line number %s", i, errorLogs[i].error, errorLogs[i].lineno);
 	}
 
-    printf("\n##############################################################\n\n\n\n");
+    printf("------------------------------------------------------------------------------\n\n\n");
 }

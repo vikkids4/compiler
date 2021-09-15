@@ -1,0 +1,7 @@
+class one {
+    real funcone() {
+        while (1 > 0) do {
+            
+        };
+    };
+}

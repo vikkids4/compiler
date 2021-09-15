@@ -1,0 +1,7 @@
+class one {
+    real varone;
+    real vartwo;
+    real funcone() {
+        read(varone);
+    };
+}

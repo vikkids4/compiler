@@ -1,0 +1,4 @@
+class one {
+    integer varone;
+    real vartwo[5];
+}

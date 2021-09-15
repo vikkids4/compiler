@@ -61,7 +61,7 @@ INTEGER     {NONZERO}{DIGIT}*
 "not"       {writeTokenOutput("RESERVED", yytext, yylineno); return NOT;}
 "or"        {writeTokenOutput("RESERVED", yytext, yylineno); return OR;}
 
-"exit"      {writeTokenOutput("RESERVED", yytext, yylineno); return 0;}
+<<EOF>>      {writeTokenOutput("RESERVED", "EOF", yylineno); return 0;}
 
 {LETTER}    {writeTokenOutput("LETTER", yytext, yylineno); return LETTER;}
 {DIGIT}     {writeTokenOutput("DIGIT", yytext, yylineno); return DIGIT;}
