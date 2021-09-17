@@ -1,9 +1,9 @@
 class one {                                                             
     real varone;
-    real vartwo;
+    integer vartwo[6];
     real funcone() {
         while (vartwo > 1) do {
-            varone = vartwo;
+            varone = 121212;
             return(varone);
         };
     };

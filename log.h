@@ -34,6 +34,7 @@ void addParserLog(char *log) {
 
 // Printing error logs
 void printParseLogs() {
+    printInfo("Syntax Analysis");
     int i;
     for(i=0; i < parserLogNo; i++) {
         // print on console
@@ -58,9 +59,9 @@ void printPhase(char *phase) {
 
 // Printing Info logs
 void printInfo(char *info) {
-    // printf("\n\n==============================================================\n\n");
-    printf("[INFO] %s\n", info);
-    // printf("\n\n==============================================================\n\n");
+    printf("\n-----------------------------------------------------------------------------------------\n");
+    printf("%s", info);
+    printf("\n-----------------------------------------------------------------------------------------\n\n");
 }
 
 // Storing overall error logs
@@ -72,14 +73,12 @@ void addErrorLog(char *error, char *lineno) {
 
 // Printing error logs
 void printErrorLogs() {
-    printf("------------------------------------------------------------------------------\n");
-    printf("Error Logs");
-    printf("\n------------------------------------------------------------------------------\n");
+    printInfo("Error Logs");
     
     int i;
     for(i=0; i < errorLogNo + 1; i++) {
         printf("[%d] %s in line number %s", i, errorLogs[i].error, errorLogs[i].lineno);
 	}
 
-    printf("------------------------------------------------------------------------------\n\n\n");
+    printf("-----------------------------------------------------------------------------------------\n\n\n");
 }

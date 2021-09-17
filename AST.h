@@ -80,6 +80,7 @@ typedef struct{
     bool init;
     VariableNode variable;
     ExprNode expr;
+    char lineno[3];
 } VarAssignStmtNode;
 
 typedef struct{
@@ -189,12 +190,18 @@ void parseReturnStmt(ReturnStmtNode *returnStmtNode) {
 }
 
 void parseVarAssignStmt(VarAssignStmtNode *varAssignStmtNode) {
-    if (varAssignStmtNode->init == true) {        
+    if (varAssignStmtNode->init == true) {
         fprintf(assemblyFilePtr, "\t;VAR ASSIGNMENT STMT NODE\n");
         fprintf(assemblyFilePtr, "\tMOV EAX, [%d]\n", getVarLocation(varAssignStmtNode->variable.id));
         if (strlen(varAssignStmtNode->expr.arithExpr.term.factor.num) != 0) {
+            if (sizeof(atoi(getVarSize(varAssignStmtNode->variable.id))) < sizeof(atoi(varAssignStmtNode->expr.arithExpr.term.factor.num))) {
+                addErrorLog("Variable size exceeded during variable assignment statement", varAssignStmtNode->lineno);
+            }
             fprintf(assemblyFilePtr, "\tMOV EBX, %s\n", varAssignStmtNode->expr.arithExpr.term.factor.num);
         } else {
+            if (strcmp(getVarType(varAssignStmtNode->variable.id),getVarType(varAssignStmtNode->expr.arithExpr.term.factor.variable->id)) != 0) {
+                addErrorLog("Type mismatch error in variable declaration", varAssignStmtNode->lineno);
+            }
             fprintf(assemblyFilePtr, "\tMOV EBX, [%d]\n", getVarLocation(varAssignStmtNode->expr.arithExpr.term.factor.variable->id));
         }
         
@@ -355,6 +362,18 @@ FILE *getAssemblyFile() {
     }
 }
 
+void printCodeOnConsole() {
+    assemblyFilePtr = fopen("assembly.txt", "r");
+    char* token;
+    char line[255];
+    token = fgets(line, 255, assemblyFilePtr);
+    while (token != NULL) {
+        printf("%s", token);
+        token = fgets(line, 255, assemblyFilePtr);
+    }
+    fclose(assemblyFilePtr);
+}
+
 void parseAST(ProgNode *progNode) {
     getAssemblyFile();
     fprintf(assemblyFilePtr, "global _start\n\n");
@@ -385,98 +404,6 @@ void parseAST(ProgNode *progNode) {
         }
     }
     fprintf(assemblyFilePtr, "\n\n");
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// void testTree(ProgNode progNode) {
-//     if (progNode.init = true)
-//     {
-//         for (int i = 0; i < progNode.classDeclCount; i++)
-//         {
-//             fprintf(assemblyFilePtr, "CLASS %d : %s\n", i, progNode.classDecl[i].id);
-//             for (int j = 0; j < progNode.classDecl[i].varDeclCount; j++)
-//             {
-//                 fprintf(assemblyFilePtr, "VAR INIT: %d\n", progNode.classDecl[i].varDecl->init);
-//                 if(progNode.classDecl[i].varDecl->init == true) {
-//                     fprintf(assemblyFilePtr, "VARIABLE - %d IS %d : %s\n", i, j, progNode.classDecl[i].varDecl[j].id);
-//                 }
-//             }
-            
-//         }
-        
-//     }
-    
-// }
-
-
-
-// typedef struct{
-//     bool init;
-//     char a[10];
-// } nodeOne;
-
-// typedef struct{
-//     nodeOne one;
-// } nodeTwo;
-
-// void next(nodeTwo *nt) {
-//     strcpy(nt->one.a, "after");
-//     // fprintf(assemblyFilePtr, "NODE ONE NEW: %s\n", nt.one.a);
-// }
-
-void test() {
-    // nodeOne none;
-    // none.init = true;
-    // strcpy(none.a, "before");
-    // nodeTwo ntwo;
-    // ntwo.one = none;
-    // fprintf(assemblyFilePtr, "NONE BEFORE: %s\n", ntwo.one.a);
-    // next(&ntwo);
-    // fprintf(assemblyFilePtr, "NONE AFTER: %s\n", ntwo.one.a);
-
-    // ClassDeclNode cdn;
-    // ProgBodyNode pbn;
-    // FuncDefNode fdn;
-    // FuncHeadNode fhn;
-    // FuncBodyNode fbn;
-    // StatementNode sn;
-    // ReturnStmtNode rstn;
-    // WriteStmtNode wsn;
-    // ReadStmtNode rsn;
-    // WhileStmtNode whsn;
-    // IfElseStmtNode iesn;
-    // StatBlockNode sbln;
-    // VarAssignStmtNode vasn;
-    // ExprNode en;
-    // RelArithExprNode raen;
-    // VariableNode vn;
-    // IdnestNode idnst;
-    // IndiceNode indn;
-    // ArithExprNode aen;
-    // TermNode tn;
-    // FactorNode fn;
-    // VarDeclNode vdcln;
-    // ArraySizeNode aszn;
-    // fprintf(assemblyFilePtr, "DONE");
+    fclose(assemblyFilePtr);
+    printCodeOnConsole();
 }

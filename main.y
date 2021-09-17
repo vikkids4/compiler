@@ -44,13 +44,13 @@ void yyerror(char *s) {
 }
 
 void lexicalAnalysis() {
-    bool enableTest = false;
+    bool enableTest = true;
 
     FILE *inputFilePtr;
     extern FILE *yyin;
     if (enableTest == true) {
         char inputFile[30];
-        printf("\nPlease enter the test case file name: ");
+        printf("\nPlease enter the input file name: ");
         scanf("%s", &inputFile);
         strcat(inputFile, ".txt");
 	    inputFilePtr = fopen(inputFile, "r");
@@ -63,7 +63,7 @@ void lexicalAnalysis() {
 	}
     
     lex_start = clock();
-
+    printInfo("Lexical Analysis");
     yyin = inputFilePtr;
     while(yylex() != 0) {}
     fclose(inputFilePtr);
@@ -79,24 +79,25 @@ void syntaxtParsing() {
 }
 void codeGeneration() {
     codegen_start = clock();
+    printInfo("Code Generation");
     generateCode();
     codegen_end = clock();
     codegen_time = ((double) (codegen_end - codegen_start)) / CLOCKS_PER_SEC;
 }
 
 void printStatus() {
-    printf("\n\n-------------------------------------------------------------------------------\n");
+    printf("\n\n-----------------------------------------------------------------------------------------\n");
     printf("%-12s%-30s%-16s%-12s\n", "Phase No.", "Phase Name", "Status", "Time Elapsed (s)");
-    printf("-------------------------------------------------------------------------------\n");
+    printf("-----------------------------------------------------------------------------------------\n");
     printf("%-12s%-30s%-16s%-12f\n", "1", "Lexical Analysis", "Completed", lex_time);
     printf("%-12s%-30s%-16s%-12f\n", "2", "Syntax/Semantic Analysis", "Completed", parse_time);
     printf("%-12s%-30s%-16s%-12f\n", "3", "Code Generation", "Completed", codegen_time);
-    printf("-------------------------------------------------------------------------------\n");
+    printf("-----------------------------------------------------------------------------------------\n");
     printf("%35s%23s%-12f\n", "Overall Time", "", lex_time + parse_time + codegen_time);
-    printf("-------------------------------------------------------------------------------\n\n");
+    printf("-----------------------------------------------------------------------------------------\n\n");
 
     int errorsCount = getErrorsCount();
-    printf("\nCompilation finished in %f seconds with %d errors.\n\n\n", prog_time, errorsCount);
+    printf("\nCompilation finished in %f seconds with %d errors.\n\n\n", lex_time+parse_time+codegen_time, errorsCount);
 
     if (errorsCount > 0) {
         printErrorLogs();
@@ -115,5 +116,6 @@ int main(void) {
     prog_time = ((double) (prog_end - prog_start)) / CLOCKS_PER_SEC;
 
     printStatus();
+    deallocateVariableMemory(); // deallocation of memory
     return 0;
 }

@@ -536,6 +536,7 @@ int statement(StatementNode *statementNode) {
         variableNodes[variableNodesCount].init = true;
         varAssignStmtNodes[++varAssignStmtNodesCount].init = false;
         varAssignStmtNodes[varAssignStmtNodesCount].variable = variableNodes[variableNodesCount];
+        strcpy(varAssignStmtNodes[varAssignStmtNodesCount].lineno, currLineNo);
 
         addParserLog("Variable detected inside statement, checking for assignment operator");
         getNextToken();
@@ -553,11 +554,11 @@ int statement(StatementNode *statementNode) {
                 }
             
             if(expr(&exprNodes[exprNodesCount]) == 1) {
+                printf("  \n");
                 if(isNum == true) {
                     variableSym *v = getVarriableSymbol(varAssignStmtNodes[varAssignStmtNodesCount].variable.id);
-                    printf("VAR %s\n", v->name);
                     strcpy(v->value, exprNodes[exprNodesCount].arithExpr.term.factor.num);
-                    updateVariableSymbolTableValue(v);   
+                    updateVariableSymbolTableValue(v);
                 }
 
                 exprNodes[exprNodesCount].init = true;
@@ -1181,10 +1182,9 @@ void parse(ProgNode *progNode) {
 void parseStart() {
     initTokenFile();
 
-    
     progNode.init = false;
     parse(&progNode);
-    // printParseLogs();
+    printParseLogs();
     printAllSymbolTables();
     // printErrorLogs();
 }

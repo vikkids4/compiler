@@ -4,7 +4,7 @@
 int tokenCount = 0;
 
 void printToken(char *type, char *token, int lineno) {
-	printf("Token: %-8s \t Type: %-12s Line no: %-12d \n", type, token, lineno);
+	printf("Type: %-8s \t Token: %-12s Line no: %-12d \n", type, token, lineno);
 }
 
 void writeTokenOutput(char *type, char *token, int lineno) {
@@ -15,6 +15,6 @@ void writeTokenOutput(char *type, char *token, int lineno) {
 		exit(1);
 	}
 	fprintf(fptr, "%s:%s:%d\n", type, token, lineno);
-	// printToken(type, token, lineno);
+	printToken(type, token, lineno);
 	fclose(fptr);
 }
