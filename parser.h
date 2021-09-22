@@ -51,6 +51,11 @@ int funcBodyNodesCount = 0;
 int ifElseStmtNodesCount = 0;
 int varAssignStmtNodesCount = 0;
 
+int arithExpr(ArithExprNode *arithExprNode);
+int statement(StatementNode *statementNode);
+int aParams();
+int expr(ExprNode *exprNode);
+
 void initTokenFile() {
     tokensFilePtr = fopen("tokens.txt", "r");
     if (tokensFilePtr == NULL) {
@@ -398,7 +403,7 @@ int term(TermNode *termNode) {
         factorNodes[factorNodesCount].init = true;
         termNode->factor = factorNodes[factorNodesCount];
         addParserLog("Detected factor, checking for mult operator");
-        getNextToken();
+        // getNextToken();
         if(multOp() == 1) {
             addParserLog("Multiplication operation detected");
             getNextToken();
@@ -454,6 +459,7 @@ int expr(ExprNode *exprNode) {
         arithExprNodes[arithExprNodesCount].init = true;
         exprNode->arithExpr = arithExprNodes[arithExprNodesCount];
         relArithExprNodes[++relArithExprNodesCount].init = false;
+        getNextToken();
         if (relOp() == 1) {
             exprNode->arithExpr.init = false;
             relArithExprNodes[relArithExprNodesCount].arithExpr1 = arithExprNodes[arithExprNodesCount];
@@ -499,10 +505,14 @@ int statBlock(StatBlockNode *statBlockNode) {
             statBlockNode->statement[++statBlockNode->statementNodeCount] = &statementNodes[statementNodesCount];
             addParserLog("Detected statement , checking for more statements");
             getNextToken();
-            while (statement(&statementNodes[++statementNodesCount]) == 1){
-                statBlockNode->statement[++statBlockNode->statementNodeCount] = &statementNodes[statementNodesCount];
-                addParserLog("Detected more statements");
-                getNextToken();
+            if (strcmp(currToken, "}") != 0) {
+                while (statement(&statementNodes[++statementNodesCount]) == 1){
+                    statBlockNode->statement[++statBlockNode->statementNodeCount] = &statementNodes[statementNodesCount];
+                    addParserLog("Detected more statements");
+                    if (strcmp(currToken, "}") != 0) {
+                        getNextToken();
+                    }
+                }
             }
         } else {
             addParserLog("No statements found inside statBlock");
@@ -564,8 +574,6 @@ int statement(StatementNode *statementNode) {
                 exprNodes[exprNodesCount].init = true;
                 varAssignStmtNodes[varAssignStmtNodesCount].expr = exprNodes[exprNodesCount];
                 addParserLog("Expression detected, checking for ;");
-                // getNextToken();
-                // getNextToken();
                 if(strcmp(currToken, ";") == 0) {
                     varAssignStmtNodes[varAssignStmtNodesCount].init = true;
                     statementNode->varAssignStmt = varAssignStmtNodes[varAssignStmtNodesCount];
@@ -599,6 +607,7 @@ int statement(StatementNode *statementNode) {
                 exprNodes[exprNodesCount].init = true;
                 ifElseStmtNodes[ifElseStmtNodesCount].expr = exprNodes[exprNodesCount];
                 addParserLog("Detected expression , checking for )");
+                getNextToken();
                 if(strcmp(currToken, ")") == 0) {
                     addParserLog("Detected ) , checking for then");
                     getNextToken();
@@ -622,7 +631,10 @@ int statement(StatementNode *statementNode) {
                                     statBlockNodes[statBlockNodesCount].init = true;
                                     ifElseStmtNodes[ifElseStmtNodesCount].statBlock2 = statBlockNodes[statBlockNodesCount];
                                     addParserLog("Detected statBlock , checking for ;");
-                                    getNextToken();
+                                    // getNextToken();
+                                    if(strcmp(currToken, ";") != 0) {
+                                        getNextToken();
+                                    }
                                     if(strcmp(currToken, ";") == 0) {
                                         ifElseStmtNodes[ifElseStmtNodesCount].init = true;
                                         statementNode->ifElseStmtNode = ifElseStmtNodes[ifElseStmtNodesCount];
@@ -684,7 +696,7 @@ int statement(StatementNode *statementNode) {
                 exprNode.init = true;
                 whileStmtNode.expr = exprNode;
                 addParserLog("Detected expression , checking for )");
-                // getNextToken();
+                getNextToken();
                 if(strcmp(currToken, ")") == 0) {
                     addParserLog("Detected ) , checking for do");
                     getNextToken();
@@ -844,7 +856,9 @@ int statement(StatementNode *statementNode) {
                 returnStatementNodes[returnStatementNodesCount].expr = exprNodes[exprNodesCount];
                 returnStatementNodes[returnStatementNodesCount].init = true;
                 addParserLog("Detected expression , checking for )");
-                // getNextToken();
+                if(strcmp(currToken, ")") != 0) {
+                    getNextToken();
+                }
                 if(strcmp(currToken, ")") == 0) {
                     addParserLog("Detected ) , checking for ;");
                     getNextToken();
@@ -859,6 +873,7 @@ int statement(StatementNode *statementNode) {
                         return 0;
                     }
                 } else {
+                    printf("XXX %s %s", currToken, currLineNo);
                     addParserLog("Invalid return definition, a expression should be followed by a )");
                     addErrorLog("Invalid return definition, a expression should be followed by a )", currLineNo);
                     return 0;
@@ -1063,7 +1078,9 @@ int funcDef(functionSym function, FuncDefNode *funcDefNode){
         funcBodyNodes[funcBodyNodesCount].init = true;
         funcDefNode->funcBody = funcBodyNodes[funcBodyNodesCount];
         addParserLog("Function body definition successful, checking for ;");
-        getNextToken();
+        if (strcmp(currToken, ";") != 0) {
+            getNextToken();
+        }
         if(strcmp(currToken, ";") == 0) {
             addParserLog("Function definition successful");
             return 1;

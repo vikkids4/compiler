@@ -3,8 +3,22 @@ class one {
     integer vartwo[6];
     real funcone() {
         while (vartwo > 1) do {
-            varone = 121212;
             return(varone);
         };
+    };
+
+    real functwo() {
+        if (varone > 0) then {
+            varone = 15;
+        } else {
+            varone = 10;
+        };
+    };
+}
+class two {
+    real varthree;
+    real functhree() {
+        varthree = 25;
+        read(varthree);
     };
 }
